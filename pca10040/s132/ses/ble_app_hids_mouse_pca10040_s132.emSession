@@ -3,6 +3,8 @@
  <Bookmarks/>
  <Breakpoints groups="Breakpoints" active_group="Breakpoints">
   <BreakpointListItem trigger="" line="1376" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="../../../../../../components/ble/ble_services/ble_hids/ble_hids.c" useHWbreakpoint="false"/>
+  <BreakpointListItem trigger="" line="1711" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="2" filename="../../../main.c" useHWbreakpoint="false"/>
+  <BreakpointListItem trigger="" line="1731" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="2" filename="../../../main.c" useHWbreakpoint="false"/>
   <Exceptions set="MemManage;UsageFault_Coprocessor;UsageFault_CheckingError;UsageFault_StateError;BusFault;ExceptionEntryReturnFault;HardFault"/>
  </Breakpoints>
  <ExecutionProfileWindow/>
@@ -52,8 +54,10 @@
  </TraceWindow>
  <Watch1>
   <Watches active="1" update="Never">
-   <Watchpoint numelements="0" expression="hvx_params" evalMode="0" name="hvx_params" radix="-1" linenumber="1374" filename="../../../../../../components/ble/ble_services/ble_hids/ble_hids.c" list=""/>
+   <Watchpoint expression="adc_result_in_milli_volts" name="adc_result_in_milli_volts" radix="16" linenumber="1716" filename="../../../main.c"/>
    <Watchpoint numelements="0" expression="dig_rep" evalMode="0" name="dig_rep" radix="16" linenumber="1385" filename="../../../main.c" list=""/>
+   <Watchpoint numelements="0" expression="hvx_params" evalMode="0" name="hvx_params" radix="-1" linenumber="1374" filename="../../../../../../components/ble/ble_services/ble_hids/ble_hids.c" list=""/>
+   <Watchpoint expression="wiper1_data" name="wiper1_data" radix="-1" linenumber="1720" filename="../../../main.c"/>
   </Watches>
  </Watch1>
  <Watch2>
@@ -66,12 +70,16 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="1489" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../main.c" selected="1" top="1472" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="1730" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../main.c" selected="1" top="1685" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="58" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/sensorsim/sensorsim.c" selected="0" top="34" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="242" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/ble/ble_services/ble_bas/ble_bas.c" selected="0" top="242" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="100" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/sensorsim/sensorsim.h" selected="0" top="68" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="7504" useTextEdit="1" useBinaryEdit="0" left="0" path="../config/sdk_config.h" selected="0" top="7481" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="95" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/util/app_error_weak.c" selected="0" top="82" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="7504" useTextEdit="1" useBinaryEdit="0" left="0" path="../config/sdk_config.h" selected="0" top="7472" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="99" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/util/app_error_weak.c" selected="0" top="82" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="521" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../modules/nrfx/hal/nrf_gpio.h" selected="0" top="515" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/bsp/bsp.c" selected="0" top="36" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/boards/boards.h" selected="0" top="108" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="77" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../modules/nrfx/hal/nrf_saadc.h" selected="0" top="53" codecName="Default"/>
  </Files>
  <ARMCrossStudioWindow activeProject="ble_app_hids_mouse_pca10040_s132" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="C:/Nordic/SDK/nRF5_SDK_15.2.0_9412b96/modules/nrfx/drivers/src" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>

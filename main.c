@@ -200,18 +200,20 @@ static uint16_t y = 0;
 /* SPI instance ID. */
 #define SPI_INSTANCE      1     
 #define SPI_SCK_PIN       28
-#define SPI_MISO_PIN      30
+//#define SPI_MISO_PIN      30
 #define SPI_MOSI_PIN      29
-#define SPI_SS_PIN        31
+#define SPI_SS_PIN_POT       31
+#define SPI_SS_PIN_AMP       30
+
 /* Indicates if operation on SPI has ended. */
 static volatile bool spi_xfer_done;  
 static uint8_t       m_tx_buf[] = {((uint8_t)0x00),((uint8_t)0x00)}; 
 static uint8_t       m_rx_buf[sizeof(m_tx_buf)];  
 /* SPI instance. */
 static const nrf_drv_spi_t spi = NRF_DRV_SPI_INSTANCE(SPI_INSTANCE);  /**< SPI instance. */
-static uint8_t wiper1_data;
+static int wiper_data[6];
 static uint8_t channel;
-static bool calib_channel1 = false;
+static bool calib[6] = {false,false,false,false,false,false};
                                            
 /* TWI instance ID. */
 #define TWI_INSTANCE_ID     0 
@@ -1571,10 +1573,11 @@ static void saadc_sample()
 static void spi_init()
 {
     nrf_drv_spi_config_t spi_config = NRF_DRV_SPI_DEFAULT_CONFIG;
-    spi_config.ss_pin   = SPI_SS_PIN;
-    spi_config.miso_pin = SPI_MISO_PIN;
+    spi_config.ss_pin   = NRF_DRV_SPI_PIN_NOT_USED; //SPI_SS_PIN;
+    spi_config.miso_pin = NRF_DRV_SPI_PIN_NOT_USED;
     spi_config.mosi_pin = SPI_MOSI_PIN;
     spi_config.sck_pin  = SPI_SCK_PIN;
+    //spi_config.bit_order = NRF_SPI_BIT_ORDER_LSB_FIRST;
     APP_ERROR_CHECK(nrf_drv_spi_init(&spi, &spi_config, spi_event_handler, NULL));    
 }
 
@@ -1617,15 +1620,40 @@ static void CAP1208_init(void)
     NRF_LOG_INFO("Stop CAP1208_init.");
 }
 
+static void MAX_9939_init()
+{
+
+    uint8_t command[1]; 
+    command[0] = 0xc0; //Gain a 20
+    
+    nrf_gpio_pin_clear(SPI_SS_PIN_AMP);
+    APP_ERROR_CHECK(nrf_drv_spi_transfer(&spi, command, sizeof(command), NULL, NULL));
+    //NRF_LOG_HEXDUMP_INFO(command, sizeof(command));
+
+    while (!spi_xfer_done)
+    {
+        __WFE();
+    }
+
+    spi_xfer_done = false;
+    nrf_gpio_pin_set(SPI_SS_PIN_AMP);
+
+    //NRF_LOG_FLUSH();
+}
+
 static void gpio_init()
 {
     nrf_gpio_cfg_output(A);
     nrf_gpio_cfg_output(B);
     nrf_gpio_cfg_output(C);
+    nrf_gpio_cfg_output(SPI_SS_PIN_POT);
+    nrf_gpio_cfg_output(SPI_SS_PIN_AMP);
 
     nrf_gpio_pin_clear(A);
     nrf_gpio_pin_clear(B);
     nrf_gpio_pin_clear(C);
+    nrf_gpio_pin_set(SPI_SS_PIN_POT);
+    nrf_gpio_pin_set(SPI_SS_PIN_AMP);
 }
 
 static void mux_switch(uint8_t channel)
@@ -1672,9 +1700,11 @@ static void mux_switch(uint8_t channel)
 
 static void set_potentiometer(uint8_t channel, uint8_t wiper_data)
 {
-    m_tx_buf[0] = channel - 1; 
+    channel = channel-1;
+    m_tx_buf[0] = channel; 
     m_tx_buf[1] = wiper_data;
 
+    nrf_gpio_pin_clear(SPI_SS_PIN_POT);
     APP_ERROR_CHECK(nrf_drv_spi_transfer(&spi, m_tx_buf, sizeof(m_tx_buf), NULL, NULL));
     //NRF_LOG_HEXDUMP_INFO(m_tx_buf, sizeof(m_tx_buf));
 
@@ -1684,74 +1714,63 @@ static void set_potentiometer(uint8_t channel, uint8_t wiper_data)
     }
 
     spi_xfer_done = false;
+    nrf_gpio_pin_set(SPI_SS_PIN_POT);
 
     //NRF_LOG_FLUSH();
 }
 
 static void calibration()
 {
-    NRF_LOG_INFO("Start Calibration, Chanel 1.");
+  NRF_LOG_INFO("Start Calibration");
 
-    wiper1_data = 255;
-    channel = 1;
-
-    // Set mux channel
-    mux_switch(channel);
+  for(int i = 0; i<6; i++)
+  {
+    channel = i;
+    wiper_data[channel] = 255;
+    mux_switch(channel+1);
 
     // Set potentiometer, block until set
-    set_potentiometer(channel, wiper1_data);
+    set_potentiometer(channel+1, wiper_data[channel]);
 
     // Sampling, block until get data
     saadc_sample();
     while(!m_sampling_done);
-    m_sampling_done = true;
+    m_sampling_done = false;
 
     // Decrement wiper data to be in the bridge middle point
-    if(adc_result_in_milli_volts < 1655)
+    if(adc_result_in_milli_volts > 1655)
     {
-      while ( (adc_result_in_milli_volts < 1655) && (wiper1_data > 0) )
+      while ( (adc_result_in_milli_volts > 1655) && (wiper_data[channel] > 0) )
       {
-        wiper1_data--;
+        wiper_data[channel]--;
 
         // Set potentiometer, block until set
-        set_potentiometer(channel, wiper1_data);
+        set_potentiometer(channel+1, wiper_data[channel]);
 
         // Sampling, block until get data
         saadc_sample();
         while(!m_sampling_done);
-        m_sampling_done = true;
+        m_sampling_done = false;
       }
     }
 
     //Check if wiper data is correct
-    if( (wiper1_data > 0) && (wiper1_data < 255) )
+    if( (wiper_data[channel] > 0) && (wiper_data[channel] < 255) )
     {
-      calib_channel1 = true;
+      calib[channel] = true;
     }
 
-//    while(m_tx_buf[1] > 0){
-//
-//        spi_xfer_done = false;
-//
-//        APP_ERROR_CHECK(nrf_drv_spi_transfer(&spi, m_tx_buf, sizeof(m_tx_buf), NULL, NULL));
-//        m_tx_buf[1] = m_tx_buf[1] - 1;
-//        NRF_LOG_HEXDUMP_INFO(m_tx_buf, sizeof(m_tx_buf));
-//
-//        while (!spi_xfer_done)
-//        {
-//            __WFE();
-//        }
-//
-//        NRF_LOG_FLUSH();
-//    }
+    NRF_LOG_INFO("Flags_calib[%d] = %d ", channel,  calib[channel]); 
+    NRF_LOG_INFO("Wiper_data[%d] = %d", channel, wiper_data[channel]);
+  }
 
-    NRF_LOG_INFO("End Calibration.");
+  NRF_LOG_INFO("End Calibration.");    
 }
 
 /**@brief Function for application main entry.
  */
 int main(void)
-{
+     {
     bool erase_bonds;
 
     // Initialize.
@@ -1774,6 +1793,7 @@ int main(void)
     adc_configure();
     spi_init();
     twi_init();
+    MAX_9939_init();
     calibration();
     CAP1208_init();
 
@@ -1781,43 +1801,44 @@ int main(void)
     NRF_LOG_INFO("HID Mouse example started.");
     NRF_LOG_FLUSH();
 
-    timer_battery_start();
+    //timer_battery_start();
+    timer_sampling_start();
     advertising_start(erase_bonds);
 
     // Enter main loop.
     for (;;)
     {
         idle_state_handle();
-        
+
         if( flag_sampling )
         {
             // Run code previously in timeout handler 
             //bsp_board_led_on(1);
-
-            for(uint8_t i=0; i<8; i++)
-            {
-               // Set mux channel
-               mux_switch(i);
-               
-               // Test data of calib wiper1
-               if(i == 1)
-               {
-                  // Set potentiometer, block until set
-                  set_potentiometer(channel, wiper1_data);
-               }
-               
-               bsp_board_led_on(1);
-               // Sampling, block until get data
-               saadc_sample();
-               while(!m_sampling_done);
-               m_sampling_done = true;
-               bsp_board_led_off(1);
-
-               // Read data of capacitive driver
-               read_sensorCAP_data(i);
-
-            }
-
+     
+//            for(uint8_t i=0; i<8; i++)
+//            {
+//               // Set mux channel
+//               mux_switch(i);
+//               
+//               // Test data of calib wiper1
+//               if(i == 1)
+//               {
+//                  // Set potentiometer, block until set
+//                  set_potentiometer(channel, wiper1_data);
+//               }
+//               
+//               bsp_board_led_on(1);
+//               // Sampling, block until get data
+//               saadc_sample();
+//               while(!m_sampling_done);
+//               m_sampling_done = false;
+//               bsp_board_led_off(1);
+//
+//               // Read data of capacitive driver
+//               read_sensorCAP_data(i);
+//
+//            }
+//
             //bsp_board_led_off(1);
             flag_sampling = false;
         }
