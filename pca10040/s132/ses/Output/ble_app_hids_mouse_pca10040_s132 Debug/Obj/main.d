@@ -109,6 +109,7 @@ Output/ble_app_hids_mouse_pca10040_s132\ Debug/Obj/main.o: \
  ../../../../../../components/libraries/pwr_mgmt/nrf_pwr_mgmt.h \
  ../../../../../../components/ble/peer_manager/peer_manager_handler.h \
  ../../../../../../components/ble/peer_manager/peer_manager.h \
+ ../../../../../../components/ble/ble_radio_notification/ble_radio_notification.h \
  ../../../../../../components/libraries/log/nrf_log.h \
  ../../../../../../components/libraries/experimental_section_vars/nrf_section.h \
  ../../../../../../components/libraries/strerror/nrf_strerror.h \

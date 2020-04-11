@@ -137,6 +137,7 @@
       <file file_name="../../../../../../components/ble/ble_services/ble_bas/ble_bas.c" />
       <file file_name="../../../../../../components/ble/ble_services/ble_dis/ble_dis.c" />
       <file file_name="../../../ble_hids_localmod.c" />
+      <file file_name="../../../../../../components/ble/ble_radio_notification/ble_radio_notification.c" />
     </folder>
     <folder Name="nRF_SoftDevice">
       <file file_name="../../../../../../components/softdevice/common/nrf_sdh.c" />
@@ -146,7 +147,7 @@
     <file file_name="test.h" />
     <configuration
       Name="Debug"
-      c_user_include_directories="../../../../../../integration/nrfx/legacy;../../../../../../modules/nrfx/drivers/src" />
+      c_user_include_directories="../../../../../../integration/nrfx/legacy;../../../../../../modules/nrfx/drivers/src;../../../../../../components/ble/ble_radio_notification" />
   </project>
   <configuration
     Name="Release"

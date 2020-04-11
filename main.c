@@ -82,6 +82,7 @@
 #include "nrf_ble_qwr.h"
 #include "nrf_pwr_mgmt.h"
 #include "peer_manager_handler.h"
+#include "ble_radio_notification.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
@@ -205,6 +206,8 @@ static uint16_t y = 0;
 #define SPI_SS_PIN_POT       31
 #define SPI_SS_PIN_AMP       30
 
+bool current_radio_active_state = false;
+
 /* Indicates if operation on SPI has ended. */
 static volatile bool spi_xfer_done;  
 static uint8_t       m_tx_buf[] = {((uint8_t)0x00),((uint8_t)0x00)}; 
@@ -228,6 +231,8 @@ static const nrf_drv_twi_t m_twi = NRF_DRV_TWI_INSTANCE(TWI_INSTANCE_ID);
 /* Buffer for CAP1208 driver. */
 uint8_t reg[2] = {0xFD, 0x00};
 static uint8_t cmd_read;
+static double data_read[8];
+static uint8_t sampling_line;
 
 /* SAADC */
 #define ADC_REF_VOLTAGE_IN_MILLIVOLTS   600                                     /**< Reference voltage (in milli volts) used by ADC while doing conversion. */
@@ -1473,6 +1478,15 @@ static void idle_state_handle(void)
 
 /**CUSTOM FUNCTION**/
 
+void ble_on_radio_active_evt(bool radio_active)
+{
+    current_radio_active_state = radio_active;
+    if(radio_active)
+    {
+      bsp_board_led_on(1);
+    }else bsp_board_led_off(1);
+}
+
 void saadc_event_handler(nrf_drv_saadc_evt_t const * p_event)
 {
     if (p_event->type == NRF_DRV_SAADC_EVT_DONE)
@@ -1501,11 +1515,12 @@ __STATIC_INLINE void data_handler(uint8_t data)
         data = 0;
     }
 
-    double capa1 = ((double)data/127)*100 ;
-
-    if(data > 100){  //Si nombre négatif, reset à 0
-        data = 100;
+    //Convert results
+    double data_norm = ((double)data/127)*100 ;
+    if(data_norm > 100){  //Si > 100, reset à 0
+        data_norm = 100;
     }
+    data_read[sampling_line] = data_norm;
 }
 
 void spi_event_handler(nrf_drv_spi_evt_t const * p_event,
@@ -1598,6 +1613,17 @@ void twi_init (void)
 
     nrf_drv_twi_enable(&m_twi);
 }
+
+static void radio_notification_init(void)
+{
+    uint32_t err_code;
+
+    err_code = ble_radio_notification_init(APP_IRQ_PRIORITY_LOW,
+                                           NRF_RADIO_NOTIFICATION_DISTANCE_800US,
+                                           ble_on_radio_active_evt);
+    APP_ERROR_CHECK(err_code);
+}
+
 
 static void CAP1208_init(void)
 {
@@ -1779,6 +1805,7 @@ int main(void)
     buttons_leds_init(&erase_bonds);
     power_management_init();
     ble_stack_init();
+    //radio_notification_init();
     scheduler_init();
     gap_params_init();
     gatt_init();
@@ -1812,34 +1839,20 @@ int main(void)
 
         if( flag_sampling )
         {
-            // Run code previously in timeout handler 
-            //bsp_board_led_on(1);
-     
-//            for(uint8_t i=0; i<8; i++)
-//            {
-//               // Set mux channel
-//               mux_switch(i);
-//               
-//               // Test data of calib wiper1
-//               if(i == 1)
-//               {
-//                  // Set potentiometer, block until set
-//                  set_potentiometer(channel, wiper1_data);
-//               }
-//               
-//               bsp_board_led_on(1);
-//               // Sampling, block until get data
-//               saadc_sample();
-//               while(!m_sampling_done);
-//               m_sampling_done = false;
-//               bsp_board_led_off(1);
-//
-//               // Read data of capacitive driver
-//               read_sensorCAP_data(i);
-//
-//            }
-//
-            //bsp_board_led_off(1);
+            // Run code previously in timeout handler   
+            for(uint8_t i=0; i<8; i++)
+            {
+               //bsp_board_led_on(1);
+               sampling_line = i;
+               // Read data of capacitive driver
+               read_sensorCAP_data(i);
+               //bsp_board_led_off(1);
+               if(data_read[sampling_line] > 50)
+               {
+                  NRF_LOG_INFO("Sensor detection number: %d", sampling_line);
+               }
+               
+            }
             flag_sampling = false;
         }
     }

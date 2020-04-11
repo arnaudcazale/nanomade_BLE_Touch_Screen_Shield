@@ -79,6 +79,7 @@
 "Output/ble_app_hids_mouse_pca10040_s132 Debug/Obj/ble_bas.o"
 "Output/ble_app_hids_mouse_pca10040_s132 Debug/Obj/ble_dis.o"
 "Output/ble_app_hids_mouse_pca10040_s132 Debug/Obj/ble_hids_localmod.o"
+"Output/ble_app_hids_mouse_pca10040_s132 Debug/Obj/ble_radio_notification.o"
 "Output/ble_app_hids_mouse_pca10040_s132 Debug/Obj/nrf_sdh.o"
 "Output/ble_app_hids_mouse_pca10040_s132 Debug/Obj/nrf_sdh_ble.o"
 "Output/ble_app_hids_mouse_pca10040_s132 Debug/Obj/nrf_sdh_soc.o"
