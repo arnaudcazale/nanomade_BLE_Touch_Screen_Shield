@@ -103,7 +103,7 @@
 
 #define BATTERY_LEVEL_MEAS_INTERVAL     APP_TIMER_TICKS(2000)                       /**< Battery level measurement interval (ticks). */
 #define SWIPE_INTERVAL                  APP_TIMER_TICKS(20)                                                /**< Sampling timer. */
-#define SAMPLING_INTERVAL               APP_TIMER_TICKS(20)                         /**< Battery level measurement interval (ticks). */
+#define SAMPLING_INTERVAL               APP_TIMER_TICKS(50)                         /**< Battery level measurement interval (ticks). */
 #define MIN_BATTERY_LEVEL               81                                          /**< Minimum simulated battery level. */
 #define MAX_BATTERY_LEVEL               100                                         /**< Maximum simulated battery level. */
 #define BATTERY_LEVEL_INCREMENT         1                                           /**< Increment between each simulated battery level measurement. */
@@ -190,9 +190,29 @@ enum SWIPE_TYPE{
   UNKNOW,
 };
 
+enum TOUCH_MOMENT{
+  PREVIOUS,
+  ACTUAL,
+};
+
+enum TOUCH_STATE{
+  RELEASE,
+  TOUCH,
+};
+
+typedef PACKED_STRUCT
+{
+    int sampling_number;
+    uint8_t finger_state;
+    uint16_t x;
+    uint16_t y;
+}touch_state_t;
+
 static uint8_t swipe_type = UNKNOW;
 static volatile bool flag_busy = false;
 static volatile bool flag_sampling = false;
+static uint8_t touch_happened = false;
+static touch_state_t touch_state [2];
 
 static uint8_t cpt = 0;     
 static uint16_t x = 0;
@@ -208,6 +228,8 @@ static uint16_t y = 0;
 
 bool current_radio_active_state = false;
 bool flag_connected = false;
+static uint8_t current_state = RELEASE;
+static uint8_t previous_state = RELEASE;
 
 /* Indicates if operation on SPI has ended. */
 static volatile bool spi_xfer_done;  
@@ -218,6 +240,7 @@ static const nrf_drv_spi_t spi = NRF_DRV_SPI_INSTANCE(SPI_INSTANCE);  /**< SPI i
 static int wiper_data[6];
 static uint8_t channel;
 static bool calib[6] = {false,false,false,false,false,false};
+
 //Origine coordonיes -> UP/LEFT (size screen env 30 000)
 static uint16_t m_x[] = {5000, 5000, 5000, 5000, 25000, 25000, 25000, 25000};
 static uint16_t m_y[] = {25000, 20000, 15000, 10000, 10000, 15000, 20000, 25000};
@@ -1803,18 +1826,65 @@ static void calibration()
   NRF_LOG_INFO("End Calibration.");    
 }
 
+void state_machine_init()
+{
+    touch_state[PREVIOUS].sampling_number = 0;
+    touch_state[PREVIOUS].finger_state = RELEASE;
+    touch_state[ACTUAL].sampling_number = 0;
+    touch_state[ACTUAL].finger_state = RELEASE;
+}
+
+void check_state_machine()
+{
+  if( (touch_state[ACTUAL].finger_state == RELEASE) && (touch_state[PREVIOUS].finger_state == TOUCH) )
+  {
+    //NRF_LOG_INFO("ENCULיייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייי");
+    digitizer_send(0, 1, touch_state[ACTUAL].x, touch_state[ACTUAL].y, false);
+    NRF_LOG_INFO("Send... cpt = %d, x = %d, y = %d",touch_state[ACTUAL].x, touch_state[ACTUAL].y, false);
+  }
+  
+  //Display state machine
+//  NRF_LOG_INFO("touch_state[ACTUAL].finger_state = %d", touch_state[ACTUAL].finger_state);
+//  NRF_LOG_INFO("touch_state[ACTUAL].sampling_number = %d", touch_state[ACTUAL].sampling_number);
+//  NRF_LOG_INFO("touch_state[PREVIOUS].finger_state = %d", touch_state[PREVIOUS].finger_state);
+//  NRF_LOG_INFO("touch_state[PREVIOUS].sampling_number = %d", touch_state[PREVIOUS].sampling_number);
+
+  //update state machine
+  touch_state[PREVIOUS].finger_state = touch_state[ACTUAL].finger_state;
+  touch_state[PREVIOUS].sampling_number = touch_state[ACTUAL].sampling_number;
+  touch_state[PREVIOUS].x = touch_state[ACTUAL].x;
+  touch_state[PREVIOUS].y = touch_state[ACTUAL].y;
+}
+
 void activity()
 {   
   for(uint8_t i=0; i<8; i++)
   {
      sampling_line = i;
-     // Read data of capacitive driver
+     // Read data of capacitive driver, blocking until read
      read_sensorCAP_data(i);
      if(data_read[sampling_line] > 50)
      {
+        //Touch detection
+        touch_happened = true;
+        touch_state[ACTUAL].x = m_x[sampling_line];
+        touch_state[ACTUAL].y = m_y[sampling_line];
         digitizer_send(0, 1, m_x[sampling_line], m_y[sampling_line], true);
+        NRF_LOG_INFO("Send... cpt = %d, x = %d, y = %d",touch_state[ACTUAL].x, touch_state[ACTUAL].y, true);
      }
   }
+
+  //update actual state
+  if(touch_happened)
+  {
+    touch_state[ACTUAL].finger_state = TOUCH;
+    touch_happened = false;
+  }else touch_state[ACTUAL].finger_state = RELEASE;
+  
+  touch_state[ACTUAL].sampling_number++;
+
+  //CHeck HERE!
+  check_state_machine();
 }
 
 /**@brief Function for application main entry.
@@ -1847,6 +1917,7 @@ int main(void)
     MAX_9939_init();
     calibration();
     CAP1208_init();
+    state_machine_init();
 
     // Start execution.
     NRF_LOG_INFO("HID Mouse example started.");
@@ -1863,7 +1934,8 @@ int main(void)
 
         if( flag_sampling && flag_connected)
         {
-            // Run code previously in timeout handler   
+           //NRF_LOG_INFO("sampling_number %d", sampling_number); 
+           // Run code previously in timeout handler   
            activity();
            flag_sampling = false;
         }
