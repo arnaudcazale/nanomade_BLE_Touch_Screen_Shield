@@ -207,6 +207,7 @@ static uint16_t y = 0;
 #define SPI_SS_PIN_AMP       30
 
 bool current_radio_active_state = false;
+bool flag_connected = false;
 
 /* Indicates if operation on SPI has ended. */
 static volatile bool spi_xfer_done;  
@@ -217,6 +218,9 @@ static const nrf_drv_spi_t spi = NRF_DRV_SPI_INSTANCE(SPI_INSTANCE);  /**< SPI i
 static int wiper_data[6];
 static uint8_t channel;
 static bool calib[6] = {false,false,false,false,false,false};
+//Origine coordonées -> UP/LEFT (size screen env 30 000)
+static uint16_t m_x[] = {5000, 5000, 5000, 5000, 25000, 25000, 25000, 25000};
+static uint16_t m_y[] = {25000, 20000, 15000, 10000, 10000, 15000, 20000, 25000};
                                            
 /* TWI instance ID. */
 #define TWI_INSTANCE_ID     0 
@@ -562,13 +566,17 @@ void digitizer_send(uint8_t id, uint8_t c_count, uint16_t x, uint16_t y, bool ti
     report.contact_count_max = 6;
 
     uint32_t err_code;
-    err_code = ble_hids_inp_rep_send(&m_hids,
-                                         INPUT_REP_DIGITIZER_INDEX,
-                                         INPUT_REP_DIGITIZER_LEN,
-                                         (uint8_t *)&report,
-                                         m_conn_handle); 
 
-    APP_ERROR_CHECK(err_code);
+    do
+    {
+      err_code = ble_hids_inp_rep_send(&m_hids,
+                                           INPUT_REP_DIGITIZER_INDEX,
+                                           INPUT_REP_DIGITIZER_LEN,
+                                           (uint8_t *)&report,
+                                           m_conn_handle); 
+
+      //APP_ERROR_CHECK(err_code);
+    }while(err_code == NRF_ERROR_RESOURCES);
 }
 
 static void swipe_timeout_handler(void * p_context)
@@ -1165,6 +1173,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 
             err_code = nrf_ble_qwr_conn_handle_assign(&m_qwr, m_conn_handle);
             APP_ERROR_CHECK(err_code);
+            flag_connected = true;
             break;
 
         case BLE_GAP_EVT_DISCONNECTED:
@@ -1172,6 +1181,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             // LED indication will be changed when advertising starts.
 
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
+            flag_connected = false;
             break;
 
         case BLE_GAP_EVT_PHY_UPDATE_REQUEST:
@@ -1793,6 +1803,20 @@ static void calibration()
   NRF_LOG_INFO("End Calibration.");    
 }
 
+void activity()
+{   
+  for(uint8_t i=0; i<8; i++)
+  {
+     sampling_line = i;
+     // Read data of capacitive driver
+     read_sensorCAP_data(i);
+     if(data_read[sampling_line] > 50)
+     {
+        digitizer_send(0, 1, m_x[sampling_line], m_y[sampling_line], true);
+     }
+  }
+}
+
 /**@brief Function for application main entry.
  */
 int main(void)
@@ -1837,23 +1861,11 @@ int main(void)
     {
         idle_state_handle();
 
-        if( flag_sampling )
+        if( flag_sampling && flag_connected)
         {
             // Run code previously in timeout handler   
-            for(uint8_t i=0; i<8; i++)
-            {
-               //bsp_board_led_on(1);
-               sampling_line = i;
-               // Read data of capacitive driver
-               read_sensorCAP_data(i);
-               //bsp_board_led_off(1);
-               if(data_read[sampling_line] > 50)
-               {
-                  NRF_LOG_INFO("Sensor detection number: %d", sampling_line);
-               }
-               
-            }
-            flag_sampling = false;
+           activity();
+           flag_sampling = false;
         }
     }
 }
