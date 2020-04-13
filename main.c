@@ -103,7 +103,7 @@
 
 #define BATTERY_LEVEL_MEAS_INTERVAL     APP_TIMER_TICKS(2000)                       /**< Battery level measurement interval (ticks). */
 #define SWIPE_INTERVAL                  APP_TIMER_TICKS(20)                                                /**< Sampling timer. */
-#define SAMPLING_INTERVAL               APP_TIMER_TICKS(20)                         /**< Battery level measurement interval (ticks). */
+#define SAMPLING_INTERVAL               APP_TIMER_TICKS(50)                         /**< Battery level measurement interval (ticks). */
 #define MIN_BATTERY_LEVEL               81                                          /**< Minimum simulated battery level. */
 #define MAX_BATTERY_LEVEL               100                                         /**< Maximum simulated battery level. */
 #define BATTERY_LEVEL_INCREMENT         1                                           /**< Increment between each simulated battery level measurement. */
@@ -243,8 +243,8 @@ static uint8_t channel;
 static bool calib[6] = {false,false,false,false,false,false};
 
 //Origine coordonées -> UP/LEFT (size screen max = 32 766)
-static uint16_t m_x[] = {5000, 5000, 5000, 5000, 25000, 25000, 25000, 25000};
-static uint16_t m_y[] = {18000, 17000, 16000, 15000, 15000, 16000, 17000, 18000};
+static uint16_t m_x[] = {0, 0, 0, 0, 15000, 15000, 15000, 15000};
+static uint16_t m_y[] = {30000, 20000, 10000, 0, 0, 10000, 20000, 30000};
                                            
 /* TWI instance ID. */
 #define TWI_INSTANCE_ID     0 
@@ -585,7 +585,7 @@ void digitizer_send(uint8_t id, uint8_t c_count, uint16_t x, uint16_t y, bool ti
     report.contact_id = id;
     report.x = x;
     report.y = y;
-    report.scan_time = 0x64;
+    report.scan_time = 0xA; //0x64;
     report.contact_count = c_count;
     report.contact_count_max = 6;
 
@@ -613,9 +613,10 @@ static void swipe_timeout_handler(void * p_context)
             x = (30000) - cpt*2500;
             cpt++;
             digitizer_send(0, 1, x, y, true);
-            NRF_LOG_INFO("Send... cpt = %d, x = %d, y = %d, tip = %d", cpt, x, y, true);
+            NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, true);
             if(cpt == 5) {
                 digitizer_send(0, 1, x, y, false);
+                NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d",x, y, false);
                 timer_swipe_stop();
                 cpt = 0;
             }
@@ -626,9 +627,10 @@ static void swipe_timeout_handler(void * p_context)
             x = cpt*2500;
             cpt++;
             digitizer_send(0, 1, x, y, true);
-            NRF_LOG_INFO("Send... cpt = %d, x = %d, y = %d, tip = %d", cpt, x, y, true);
+            NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, true);
             if(cpt == 5) {
                 digitizer_send(0, 1, x, y, false);
+                NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, false);
                 timer_swipe_stop();
                 cpt = 0;
             }
@@ -639,10 +641,10 @@ static void swipe_timeout_handler(void * p_context)
             x = 0;
             cpt++;
             digitizer_send(0, 1, x, y, true);
-            NRF_LOG_INFO("Send... cpt = %d, x = %d, y = %d, tip = %d", cpt, x, y, true);
+            NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, true);
             if(cpt == 5) {
                 digitizer_send(0, 1, x, y, false);
-                NRF_LOG_INFO("Send... cpt = %d, x = %d, y = %d", cpt, x, y, false);
+                NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, false);
                 timer_swipe_stop();
                 cpt = 0;
             }
@@ -653,10 +655,10 @@ static void swipe_timeout_handler(void * p_context)
             x = 0;
             cpt++;
             digitizer_send(0, 1, x, y, true);
-            NRF_LOG_INFO("Send... cpt = %d, x = %d, y = %d, tip = %d", cpt, x, y, true);
-            if(cpt == 10) {
+            NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, true);
+            if(cpt == 5) {
                 digitizer_send(0, 1, x, y, false);
-                NRF_LOG_INFO("Send... cpt = %d, x = %d, y = %d", cpt, x, y, false);
+                NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, false);
                 timer_swipe_stop();
                 cpt = 0;
             }
@@ -1422,8 +1424,7 @@ static void bsp_event_handler(bsp_event_t event)
             if (m_conn_handle != BLE_CONN_HANDLE_INVALID)
             {
                 swipe_type = UP;
-                //timer_swipe_start();
-                timer_sampling_start();
+                timer_swipe_start();
             }
             break;
 
@@ -1840,9 +1841,9 @@ void check_state_machine()
   // RELEASE detect
   if( (touch_state[ACTUAL].finger_state == RELEASE) && (touch_state[PREVIOUS].finger_state == TOUCH) )
   {
-    //digitizer_send(0, 1, touch_state[ACTUAL].x, touch_state[ACTUAL].y, false);
     NRF_LOG_INFO("REALEASE -> LINE %d",touch_state[ACTUAL].line);
-    //NRF_LOG_INFO("Send... cpt = %d, x = %d, y = %d",touch_state[ACTUAL].x, touch_state[ACTUAL].y, false);
+    //digitizer_send(0, 1, touch_state[ACTUAL].x, touch_state[ACTUAL].y, false);
+    //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d",touch_state[ACTUAL].x, touch_state[ACTUAL].y, false);
   }
 
   //FIRST TOUCH detect
@@ -1850,25 +1851,27 @@ void check_state_machine()
     || (touch_state[ACTUAL].line != touch_state[PREVIOUS].line) )
   {
      NRF_LOG_INFO("FIRST TOUCH -> LINE %d", touch_state[ACTUAL].line);
+     //digitizer_send(0, 1, m_x[sampling_line], m_y[sampling_line], true);
+     //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d",touch_state[ACTUAL].x, touch_state[ACTUAL].y, true);
   }
 
   // LONG TOUCH detect
-  if( (touch_state[ACTUAL].finger_state == TOUCH) && (touch_state[PREVIOUS].finger_state == TOUCH) )
-  {
-    //digitizer_send(0, 1, m_x[sampling_line], m_y[sampling_line], true);
-    //NRF_LOG_INFO("Send... cpt = %d, x = %d, y = %d",touch_state[ACTUAL].x, touch_state[ACTUAL].y, true);
-    
-    //NRF_LOG_INFO("SAME TOUCH -> LINE %d",touch_state[ACTUAL].line);
-    
+//  if( (touch_state[ACTUAL].finger_state == TOUCH) && (touch_state[PREVIOUS].finger_state == TOUCH) )
+//  {
+//    NRF_LOG_INFO("SAME TOUCH -> LINE %d",touch_state[ACTUAL].line);
+//    //digitizer_send(0, 1, m_x[sampling_line], m_y[sampling_line], true);
+//    //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d",touch_state[ACTUAL].x, touch_state[ACTUAL].y, true);
+//  }
 
-//    //Display state machine
-//    NRF_LOG_INFO("touch_state[ACTUAL].finger_state = %d", touch_state[ACTUAL].finger_state);
-//    NRF_LOG_INFO("touch_state[ACTUAL].sampling_number = %d", touch_state[ACTUAL].sampling_number);
-//    NRF_LOG_INFO("touch_state[PREVIOUS].finger_state = %d", touch_state[PREVIOUS].finger_state);
-//    NRF_LOG_INFO("touch_state[PREVIOUS].sampling_number = %d", touch_state[PREVIOUS].sampling_number);
-//    NRF_LOG_INFO("************************************");
-
-  }
+//#define LOG_DEBUG
+#ifdef LOG_DEBUG
+    //Display state machine
+    NRF_LOG_INFO("touch_state[ACTUAL].finger_state = %d", touch_state[ACTUAL].finger_state);
+    NRF_LOG_INFO("touch_state[ACTUAL].sampling_number = %d", touch_state[ACTUAL].sampling_number);
+    NRF_LOG_INFO("touch_state[PREVIOUS].finger_state = %d", touch_state[PREVIOUS].finger_state);
+    NRF_LOG_INFO("touch_state[PREVIOUS].sampling_number = %d", touch_state[PREVIOUS].sampling_number);
+    NRF_LOG_INFO("************************************");
+#endif
 
   //update state machine
   touch_state[PREVIOUS].finger_state = touch_state[ACTUAL].finger_state;
@@ -1885,7 +1888,7 @@ void activity()
      sampling_line = i;
      // Read data of capacitive driver, blocking until read
      read_sensorCAP_data(i);
-     if(data_read[sampling_line] > 50)
+     if(data_read[sampling_line] > 25)
      {
         //Touch detection
         touch_happened = true;

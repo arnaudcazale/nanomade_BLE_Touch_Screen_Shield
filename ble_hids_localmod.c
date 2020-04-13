@@ -1335,7 +1335,7 @@ uint32_t ble_hids_inp_rep_send(ble_hids_t * p_hids,
     VERIFY_PARAM_NOT_NULL(p_data);
 
     uint32_t err_code;
-    NRF_LOG_INFO("inp_rep_send len: %i, rep_index %i", len, rep_index);
+    //NRF_LOG_INFO("inp_rep_send len: %i, rep_index %i", len, rep_index);
     if (rep_index < p_hids->inp_rep_count)
     {
         ble_hids_rep_char_t * p_rep_char = &p_hids->inp_rep_array[rep_index];
