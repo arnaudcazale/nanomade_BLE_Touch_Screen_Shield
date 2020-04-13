@@ -103,7 +103,7 @@
 
 #define BATTERY_LEVEL_MEAS_INTERVAL     APP_TIMER_TICKS(2000)                       /**< Battery level measurement interval (ticks). */
 #define SWIPE_INTERVAL                  APP_TIMER_TICKS(20)                                                /**< Sampling timer. */
-#define SAMPLING_INTERVAL               APP_TIMER_TICKS(50)                         /**< Battery level measurement interval (ticks). */
+#define SAMPLING_INTERVAL               APP_TIMER_TICKS(20)                         /**< Battery level measurement interval (ticks). */
 #define MIN_BATTERY_LEVEL               81                                          /**< Minimum simulated battery level. */
 #define MAX_BATTERY_LEVEL               100                                         /**< Maximum simulated battery level. */
 #define BATTERY_LEVEL_INCREMENT         1                                           /**< Increment between each simulated battery level measurement. */
@@ -190,6 +190,14 @@ enum SWIPE_TYPE{
   UNKNOW,
 };
 
+enum GESTURE_TYPE{
+  GO_UP,
+  GO_DOWN,
+  GO_LEFT,
+  GO_RIGHT,
+  GO_NOWHERE,
+};
+
 enum TOUCH_MOMENT{
   PREVIOUS,
   ACTUAL,
@@ -215,6 +223,7 @@ static volatile bool flag_sampling = false;
 static uint8_t touch_happened = false;
 static touch_state_t touch_state [2];
 static bool lock_SM = false;
+static uint8_t gesture;
 
 static uint8_t cpt = 0;     
 static uint16_t x = 0;
@@ -244,8 +253,8 @@ static uint8_t channel;
 static bool calib[6] = {false,false,false,false,false,false};
 
 //Origine coordonées -> UP/LEFT (size screen max = 32 766)
-static uint16_t m_x[] = {0, 0, 0, 0, 15000, 15000, 15000, 15000};
-static uint16_t m_y[] = {30000, 20000, 10000, 0, 0, 10000, 20000, 30000};
+static uint16_t m_x[] = {10000, 10000, 10000, 10000, 20000, 20000, 20000, 20000};
+static uint16_t m_y[] = {20000, 17500, 15000, 12500, 12500, 15000, 17500, 20000};
                                            
 /* TWI instance ID. */
 #define TWI_INSTANCE_ID     0 
@@ -586,7 +595,7 @@ void digitizer_send(uint8_t id, uint8_t c_count, uint16_t x, uint16_t y, bool ti
     report.contact_id = id;
     report.x = x;
     report.y = y;
-    report.scan_time = 0xA; //0x64;
+    report.scan_time = 0x64; //0x64;
     report.contact_count = c_count;
     report.contact_count_max = 6;
 
@@ -1835,6 +1844,7 @@ void state_machine_init()
     touch_state[PREVIOUS].finger_state = RELEASE;
     touch_state[ACTUAL].sampling_number = 0;
     touch_state[ACTUAL].finger_state = RELEASE;
+    //gesture = GO_NOWHERE;
 }
 
 void check_state_machine()
@@ -1842,7 +1852,7 @@ void check_state_machine()
   // RELEASE detect
   if( (touch_state[ACTUAL].finger_state == RELEASE) && (touch_state[PREVIOUS].finger_state == TOUCH) )
   {
-    NRF_LOG_INFO("REALEASE -> LINE %d",touch_state[ACTUAL].line);
+    //NRF_LOG_INFO("REALEASE -> LINE %d",touch_state[ACTUAL].line);
     lock_SM = false;
     //digitizer_send(0, 1, touch_state[ACTUAL].x, touch_state[ACTUAL].y, false);
     //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d",touch_state[ACTUAL].x, touch_state[ACTUAL].y, false);
@@ -1859,9 +1869,10 @@ void check_state_machine()
 
 // TOUCH detect when pixel is changing
  if((touch_state[ACTUAL].finger_state == TOUCH) && (touch_state[PREVIOUS].finger_state == TOUCH)
-    && (touch_state[ACTUAL].line != touch_state[PREVIOUS].line) )
+    && (touch_state[ACTUAL].line != touch_state[PREVIOUS].line) 
+    && (!lock_SM) )
  {
-    NRF_LOG_INFO("CHANGE PIXEL TOUCH -> LINE %d", touch_state[ACTUAL].line);
+    //NRF_LOG_INFO("CHANGE PIXEL TOUCH -> LINE %d", touch_state[ACTUAL].line);
 
     switch(touch_state[ACTUAL].line)
     {
@@ -2132,22 +2143,22 @@ void check_state_machine()
        case GO_UP:
           NRF_LOG_INFO("GO_UP");
           swipe_type = UP;
-          timer_swipe_start();
+          //timer_swipe_start();
         break;
        case GO_DOWN:
           NRF_LOG_INFO("GO_DOWN");
           swipe_type = DOWN;
-          timer_swipe_start();
+          //timer_swipe_start();
         break;
          case GO_LEFT:
           NRF_LOG_INFO("GO_LEFT");
           swipe_type = LEFT;
-          timer_swipe_start();
+          //timer_swipe_start();
         break;
          case GO_RIGHT:
           NRF_LOG_INFO("GO_RIGHT");
           swipe_type = RIGHT;
-          timer_swipe_start();
+          //timer_swipe_start();
         break;
          case GO_NOWHERE:
          lock_SM = false;
