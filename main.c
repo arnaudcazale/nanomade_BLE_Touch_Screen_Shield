@@ -1837,34 +1837,45 @@ void state_machine_init()
 
 void check_state_machine()
 {
-  //RELEASE detect
+  // RELEASE detect
   if( (touch_state[ACTUAL].finger_state == RELEASE) && (touch_state[PREVIOUS].finger_state == TOUCH) )
   {
     //digitizer_send(0, 1, touch_state[ACTUAL].x, touch_state[ACTUAL].y, false);
     NRF_LOG_INFO("REALEASE -> LINE %d",touch_state[ACTUAL].line);
-    NRF_LOG_INFO("Send... cpt = %d, x = %d, y = %d",touch_state[ACTUAL].x, touch_state[ACTUAL].y, false);
+    //NRF_LOG_INFO("Send... cpt = %d, x = %d, y = %d",touch_state[ACTUAL].x, touch_state[ACTUAL].y, false);
   }
 
-  //TOUCH detect
+  //FIRST TOUCH detect
+  if((touch_state[ACTUAL].finger_state == TOUCH) && (touch_state[PREVIOUS].finger_state == RELEASE)
+    || (touch_state[ACTUAL].line != touch_state[PREVIOUS].line) )
+  {
+     NRF_LOG_INFO("FIRST TOUCH -> LINE %d", touch_state[ACTUAL].line);
+  }
+
+  // LONG TOUCH detect
   if( (touch_state[ACTUAL].finger_state == TOUCH) && (touch_state[PREVIOUS].finger_state == TOUCH) )
   {
     //digitizer_send(0, 1, m_x[sampling_line], m_y[sampling_line], true);
-    NRF_LOG_INFO("TOUCH -> LINE %d",touch_state[ACTUAL].line);
-    NRF_LOG_INFO("Send... cpt = %d, x = %d, y = %d",touch_state[ACTUAL].x, touch_state[ACTUAL].y, true);
-  }
+    //NRF_LOG_INFO("Send... cpt = %d, x = %d, y = %d",touch_state[ACTUAL].x, touch_state[ACTUAL].y, true);
+    
+    //NRF_LOG_INFO("SAME TOUCH -> LINE %d",touch_state[ACTUAL].line);
+    
 
-  //Display state machine
-//  NRF_LOG_INFO("touch_state[ACTUAL].finger_state = %d", touch_state[ACTUAL].finger_state);
-//  NRF_LOG_INFO("touch_state[ACTUAL].sampling_number = %d", touch_state[ACTUAL].sampling_number);
-//  NRF_LOG_INFO("touch_state[PREVIOUS].finger_state = %d", touch_state[PREVIOUS].finger_state);
-//  NRF_LOG_INFO("touch_state[PREVIOUS].sampling_number = %d", touch_state[PREVIOUS].sampling_number);
+//    //Display state machine
+//    NRF_LOG_INFO("touch_state[ACTUAL].finger_state = %d", touch_state[ACTUAL].finger_state);
+//    NRF_LOG_INFO("touch_state[ACTUAL].sampling_number = %d", touch_state[ACTUAL].sampling_number);
+//    NRF_LOG_INFO("touch_state[PREVIOUS].finger_state = %d", touch_state[PREVIOUS].finger_state);
+//    NRF_LOG_INFO("touch_state[PREVIOUS].sampling_number = %d", touch_state[PREVIOUS].sampling_number);
+//    NRF_LOG_INFO("************************************");
+
+  }
 
   //update state machine
   touch_state[PREVIOUS].finger_state = touch_state[ACTUAL].finger_state;
   touch_state[PREVIOUS].sampling_number = touch_state[ACTUAL].sampling_number;
   touch_state[PREVIOUS].x = touch_state[ACTUAL].x;
   touch_state[PREVIOUS].y = touch_state[ACTUAL].y;
-  touch_state[PREVIOUS].y = touch_state[ACTUAL].line;
+  touch_state[PREVIOUS].line = touch_state[ACTUAL].line;
 }
 
 void activity()
