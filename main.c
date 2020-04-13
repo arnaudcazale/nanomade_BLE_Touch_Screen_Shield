@@ -214,6 +214,7 @@ static volatile bool flag_busy = false;
 static volatile bool flag_sampling = false;
 static uint8_t touch_happened = false;
 static touch_state_t touch_state [2];
+static bool lock_SM = false;
 
 static uint8_t cpt = 0;     
 static uint16_t x = 0;
@@ -1842,18 +1843,320 @@ void check_state_machine()
   if( (touch_state[ACTUAL].finger_state == RELEASE) && (touch_state[PREVIOUS].finger_state == TOUCH) )
   {
     NRF_LOG_INFO("REALEASE -> LINE %d",touch_state[ACTUAL].line);
+    lock_SM = false;
     //digitizer_send(0, 1, touch_state[ACTUAL].x, touch_state[ACTUAL].y, false);
     //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d",touch_state[ACTUAL].x, touch_state[ACTUAL].y, false);
   }
 
   //FIRST TOUCH detect
-  if((touch_state[ACTUAL].finger_state == TOUCH) && (touch_state[PREVIOUS].finger_state == RELEASE)
-    || (touch_state[ACTUAL].line != touch_state[PREVIOUS].line) )
-  {
-     NRF_LOG_INFO("FIRST TOUCH -> LINE %d", touch_state[ACTUAL].line);
+//  if((touch_state[ACTUAL].finger_state == TOUCH) && (touch_state[PREVIOUS].finger_state == RELEASE)
+//    || (touch_state[ACTUAL].line != touch_state[PREVIOUS].line) )
+//  {
+//     NRF_LOG_INFO("FIRST TOUCH -> LINE %d", touch_state[ACTUAL].line);
+//     //digitizer_send(0, 1, m_x[sampling_line], m_y[sampling_line], true);
+//     //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d",touch_state[ACTUAL].x, touch_state[ACTUAL].y, true);
+//  }
+
+// TOUCH detect when pixel is changing
+ if((touch_state[ACTUAL].finger_state == TOUCH) && (touch_state[PREVIOUS].finger_state == TOUCH)
+    && (touch_state[ACTUAL].line != touch_state[PREVIOUS].line) )
+ {
+    NRF_LOG_INFO("CHANGE PIXEL TOUCH -> LINE %d", touch_state[ACTUAL].line);
+
+    switch(touch_state[ACTUAL].line)
+    {
+      case 0:
+         switch(touch_state[PREVIOUS].line)
+         {
+            case 0:
+                gesture = GO_NOWHERE;
+              break;
+            case 1:
+                gesture = GO_DOWN;
+              break;
+            case 2:
+                gesture = GO_DOWN;
+              break;
+            case 3:
+                gesture = GO_DOWN;
+              break;
+            case 4:
+                gesture = GO_LEFT;
+              break;
+            case 5:
+                gesture = GO_LEFT;
+              break;
+            case 6:
+                gesture = GO_LEFT;
+              break;
+            case 7:
+                gesture = GO_LEFT;
+              break;
+            default:
+              break;
+         }
+        break;
+
+      case 1:
+         switch(touch_state[PREVIOUS].line)
+         {
+            case 0:
+                gesture = GO_UP;
+              break;
+            case 1:
+                gesture = GO_NOWHERE;
+              break;
+            case 2:
+                gesture = GO_DOWN;
+              break;
+            case 3:
+                gesture = GO_DOWN;
+              break;
+            case 4:
+                gesture = GO_LEFT;
+              break;
+            case 5:
+                gesture = GO_LEFT;
+              break;
+            case 6:
+                gesture = GO_LEFT;
+              break;
+            case 7:
+                gesture = GO_LEFT;
+              break;
+            default:
+              break;
+         }
+      break;
+
+      case 2:
+         switch(touch_state[PREVIOUS].line)
+         {
+            case 0:
+                gesture = GO_UP;
+              break;
+            case 1:
+                gesture = GO_UP;
+              break;
+            case 2:
+                gesture = GO_NOWHERE;
+              break;
+            case 3:
+                gesture = GO_DOWN;
+              break;
+            case 4:
+                gesture = GO_LEFT;
+              break;
+            case 5:
+                gesture = GO_LEFT;
+              break;
+            case 6:
+                gesture = GO_LEFT;
+              break;
+            case 7:
+                gesture = GO_LEFT;
+              break;
+            default:
+              break;
+         }
+      break;
+
+      case 3:
+         switch(touch_state[PREVIOUS].line)
+         {
+            case 0:
+                gesture = GO_UP;
+              break;
+            case 1:
+                gesture = GO_UP;
+              break;
+            case 2:
+                gesture = GO_UP;
+              break;
+            case 3:
+                gesture = GO_NOWHERE;
+              break;
+            case 4:
+                gesture = GO_LEFT;
+              break;
+            case 5:
+                gesture = GO_LEFT;
+              break;
+            case 6:
+                gesture = GO_LEFT;
+              break;
+            case 7:
+                gesture = GO_LEFT;
+              break;
+            default:
+              break;
+         }
+      break;
+
+      case 4:
+         switch(touch_state[PREVIOUS].line)
+         {
+            case 0:
+                gesture = GO_RIGHT;
+              break;
+            case 1:
+                gesture = GO_RIGHT;
+              break;
+            case 2:
+                gesture = GO_RIGHT;
+              break;
+            case 3:
+                gesture = GO_RIGHT;
+              break;
+            case 4:
+                gesture = GO_NOWHERE;
+              break;
+            case 5:
+                gesture = GO_UP;
+              break;
+            case 6:
+                gesture = GO_UP;
+              break;
+            case 7:
+                gesture = GO_UP;
+              break;
+            default:
+              break;
+         }
+      break;
+      case 5:
+         switch(touch_state[PREVIOUS].line)
+         {
+            case 0:
+                gesture = GO_RIGHT;
+              break;
+            case 1:
+                gesture = GO_RIGHT;
+              break;
+            case 2:
+                gesture = GO_RIGHT;
+              break;
+            case 3:
+                gesture = GO_RIGHT;
+              break;
+            case 4:
+                gesture = GO_DOWN;
+              break;
+            case 5:
+                gesture = GO_NOWHERE;
+              break;
+            case 6:
+                gesture = GO_UP;
+              break;
+            case 7:
+                gesture = GO_UP;
+              break;
+            default:
+              break;
+         }
+      break;
+
+      case 6:
+         switch(touch_state[PREVIOUS].line)
+         {
+            case 0:
+                gesture = GO_RIGHT;
+              break;
+            case 1:
+                gesture = GO_RIGHT;
+              break;
+            case 2:
+                gesture = GO_RIGHT;
+              break;
+            case 3:
+                gesture = GO_RIGHT;
+              break;
+            case 4:
+                gesture = GO_DOWN;
+              break;
+            case 5:
+                gesture = GO_DOWN;
+              break;
+            case 6:
+                gesture = GO_NOWHERE;
+              break;
+            case 7:
+                gesture = GO_UP;
+              break;
+            default:
+              break;
+         }
+      break;
+
+      case 7:
+         switch(touch_state[PREVIOUS].line)
+         {
+            case 0:
+                gesture = GO_RIGHT;
+              break;
+            case 1:
+                gesture = GO_RIGHT;
+              break;
+            case 2:
+                gesture = GO_RIGHT;
+              break;
+            case 3:
+                gesture = GO_RIGHT;
+              break;
+            case 4:
+                gesture = GO_DOWN;
+              break;
+            case 5:
+                gesture = GO_DOWN;
+              break;
+            case 6:
+                gesture = GO_DOWN;
+              break;
+            case 7:
+                gesture = GO_NOWHERE;
+              break;
+            default:
+              break;
+         }
+      break;
+
+      default:
+      break;
+
+    }
+
+    lock_SM = true;
+
+    switch(gesture)
+    {
+       case GO_UP:
+          NRF_LOG_INFO("GO_UP");
+          swipe_type = UP;
+          timer_swipe_start();
+        break;
+       case GO_DOWN:
+          NRF_LOG_INFO("GO_DOWN");
+          swipe_type = DOWN;
+          timer_swipe_start();
+        break;
+         case GO_LEFT:
+          NRF_LOG_INFO("GO_LEFT");
+          swipe_type = LEFT;
+          timer_swipe_start();
+        break;
+         case GO_RIGHT:
+          NRF_LOG_INFO("GO_RIGHT");
+          swipe_type = RIGHT;
+          timer_swipe_start();
+        break;
+         case GO_NOWHERE:
+         lock_SM = false;
+          //NRF_LOG_INFO("GO_NOWHERE");
+        break;
+    }
      //digitizer_send(0, 1, m_x[sampling_line], m_y[sampling_line], true);
      //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d",touch_state[ACTUAL].x, touch_state[ACTUAL].y, true);
-  }
+ }
 
   // LONG TOUCH detect
 //  if( (touch_state[ACTUAL].finger_state == TOUCH) && (touch_state[PREVIOUS].finger_state == TOUCH) )
