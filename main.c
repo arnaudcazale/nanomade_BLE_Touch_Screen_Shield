@@ -103,7 +103,7 @@
 
 #define BATTERY_LEVEL_MEAS_INTERVAL     APP_TIMER_TICKS(2000)                       /**< Battery level measurement interval (ticks). */
 #define SWIPE_INTERVAL                  APP_TIMER_TICKS(20)                                                /**< Sampling timer. */
-#define SAMPLING_INTERVAL               APP_TIMER_TICKS(50)                         /**< Battery level measurement interval (ticks). */
+#define SAMPLING_INTERVAL               APP_TIMER_TICKS(20)                         /**< Battery level measurement interval (ticks). */
 #define MIN_BATTERY_LEVEL               81                                          /**< Minimum simulated battery level. */
 #define MAX_BATTERY_LEVEL               100                                         /**< Maximum simulated battery level. */
 #define BATTERY_LEVEL_INCREMENT         1                                           /**< Increment between each simulated battery level measurement. */
@@ -206,6 +206,7 @@ typedef PACKED_STRUCT
     uint8_t finger_state;
     uint16_t x;
     uint16_t y;
+    uint8_t line;
 }touch_state_t;
 
 static uint8_t swipe_type = UNKNOW;
@@ -241,9 +242,9 @@ static int wiper_data[6];
 static uint8_t channel;
 static bool calib[6] = {false,false,false,false,false,false};
 
-//Origine coordonיes -> UP/LEFT (size screen env 30 000)
+//Origine coordonיes -> UP/LEFT (size screen max = 32 766)
 static uint16_t m_x[] = {5000, 5000, 5000, 5000, 25000, 25000, 25000, 25000};
-static uint16_t m_y[] = {25000, 20000, 15000, 10000, 10000, 15000, 20000, 25000};
+static uint16_t m_y[] = {18000, 17000, 16000, 15000, 15000, 16000, 17000, 18000};
                                            
 /* TWI instance ID. */
 #define TWI_INSTANCE_ID     0 
@@ -1836,13 +1837,22 @@ void state_machine_init()
 
 void check_state_machine()
 {
+  //RELEASE detect
   if( (touch_state[ACTUAL].finger_state == RELEASE) && (touch_state[PREVIOUS].finger_state == TOUCH) )
   {
-    //NRF_LOG_INFO("ENCULיייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייייי");
-    digitizer_send(0, 1, touch_state[ACTUAL].x, touch_state[ACTUAL].y, false);
+    //digitizer_send(0, 1, touch_state[ACTUAL].x, touch_state[ACTUAL].y, false);
+    NRF_LOG_INFO("REALEASE -> LINE %d",touch_state[ACTUAL].line);
     NRF_LOG_INFO("Send... cpt = %d, x = %d, y = %d",touch_state[ACTUAL].x, touch_state[ACTUAL].y, false);
   }
-  
+
+  //TOUCH detect
+  if( (touch_state[ACTUAL].finger_state == TOUCH) && (touch_state[PREVIOUS].finger_state == TOUCH) )
+  {
+    //digitizer_send(0, 1, m_x[sampling_line], m_y[sampling_line], true);
+    NRF_LOG_INFO("TOUCH -> LINE %d",touch_state[ACTUAL].line);
+    NRF_LOG_INFO("Send... cpt = %d, x = %d, y = %d",touch_state[ACTUAL].x, touch_state[ACTUAL].y, true);
+  }
+
   //Display state machine
 //  NRF_LOG_INFO("touch_state[ACTUAL].finger_state = %d", touch_state[ACTUAL].finger_state);
 //  NRF_LOG_INFO("touch_state[ACTUAL].sampling_number = %d", touch_state[ACTUAL].sampling_number);
@@ -1854,6 +1864,7 @@ void check_state_machine()
   touch_state[PREVIOUS].sampling_number = touch_state[ACTUAL].sampling_number;
   touch_state[PREVIOUS].x = touch_state[ACTUAL].x;
   touch_state[PREVIOUS].y = touch_state[ACTUAL].y;
+  touch_state[PREVIOUS].y = touch_state[ACTUAL].line;
 }
 
 void activity()
@@ -1869,8 +1880,7 @@ void activity()
         touch_happened = true;
         touch_state[ACTUAL].x = m_x[sampling_line];
         touch_state[ACTUAL].y = m_y[sampling_line];
-        digitizer_send(0, 1, m_x[sampling_line], m_y[sampling_line], true);
-        NRF_LOG_INFO("Send... cpt = %d, x = %d, y = %d",touch_state[ACTUAL].x, touch_state[ACTUAL].y, true);
+        touch_state[ACTUAL].line = sampling_line;
      }
   }
 
