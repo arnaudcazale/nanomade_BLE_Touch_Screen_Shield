@@ -103,7 +103,7 @@
 
 #define BATTERY_LEVEL_MEAS_INTERVAL     APP_TIMER_TICKS(2000)                       /**< Battery level measurement interval (ticks). */
 #define SWIPE_INTERVAL                  APP_TIMER_TICKS(20)                                                /**< Sampling timer. */
-#define SAMPLING_INTERVAL               APP_TIMER_TICKS(20)                         /**< Battery level measurement interval (ticks). */
+#define SAMPLING_INTERVAL               APP_TIMER_TICKS(50)                         /**< Battery level measurement interval (ticks). */
 #define MIN_BATTERY_LEVEL               81                                          /**< Minimum simulated battery level. */
 #define MAX_BATTERY_LEVEL               100                                         /**< Maximum simulated battery level. */
 #define BATTERY_LEVEL_INCREMENT         1                                           /**< Increment between each simulated battery level measurement. */
@@ -647,7 +647,7 @@ static void swipe_timeout_handler(void * p_context)
             break;
 
         case UP:
-            y = (30000) - cpt*2500;
+            y = (20000) - cpt*2500;
             x = 0;
             cpt++;
             digitizer_send(0, 1, x, y, true);
@@ -661,7 +661,7 @@ static void swipe_timeout_handler(void * p_context)
             break;
 
         case DOWN:
-            y = cpt*2500;
+            y = (20000) + cpt*2500;
             x = 0;
             cpt++;
             digitizer_send(0, 1, x, y, true);
@@ -1892,16 +1892,16 @@ void check_state_machine()
                 gesture = GO_DOWN;
               break;
             case 4:
-                gesture = GO_LEFT;
+                gesture = GO_NOWHERE;
               break;
             case 5:
-                gesture = GO_LEFT;
+                gesture = GO_NOWHERE;
               break;
             case 6:
-                gesture = GO_LEFT;
+                gesture = GO_NOWHERE;
               break;
             case 7:
-                gesture = GO_LEFT;
+                gesture = GO_NOWHERE;
               break;
             default:
               break;
@@ -1924,16 +1924,16 @@ void check_state_machine()
                 gesture = GO_DOWN;
               break;
             case 4:
-                gesture = GO_LEFT;
+                gesture = GO_NOWHERE;
               break;
             case 5:
-                gesture = GO_LEFT;
+                gesture = GO_NOWHERE;
               break;
             case 6:
-                gesture = GO_LEFT;
+                gesture = GO_NOWHERE;
               break;
             case 7:
-                gesture = GO_LEFT;
+                gesture = GO_NOWHERE;
               break;
             default:
               break;
@@ -1956,16 +1956,16 @@ void check_state_machine()
                 gesture = GO_DOWN;
               break;
             case 4:
-                gesture = GO_LEFT;
+                gesture = GO_NOWHERE;
               break;
             case 5:
-                gesture = GO_LEFT;
+                gesture = GO_NOWHERE;
               break;
             case 6:
-                gesture = GO_LEFT;
+                gesture = GO_NOWHERE;
               break;
             case 7:
-                gesture = GO_LEFT;
+                gesture = GO_NOWHERE;
               break;
             default:
               break;
@@ -1988,16 +1988,16 @@ void check_state_machine()
                 gesture = GO_NOWHERE;
               break;
             case 4:
-                gesture = GO_LEFT;
+                gesture = GO_NOWHERE;
               break;
             case 5:
-                gesture = GO_LEFT;
+                gesture = GO_NOWHERE;
               break;
             case 6:
-                gesture = GO_LEFT;
+                gesture = GO_NOWHERE;
               break;
             case 7:
-                gesture = GO_LEFT;
+                gesture = GO_NOWHERE;
               break;
             default:
               break;
@@ -2008,16 +2008,16 @@ void check_state_machine()
          switch(touch_state[PREVIOUS].line)
          {
             case 0:
-                gesture = GO_RIGHT;
+                gesture = GO_NOWHERE;
               break;
             case 1:
-                gesture = GO_RIGHT;
+                gesture = GO_NOWHERE;
               break;
             case 2:
-                gesture = GO_RIGHT;
+                gesture = GO_NOWHERE;
               break;
             case 3:
-                gesture = GO_RIGHT;
+                gesture = GO_NOWHERE;
               break;
             case 4:
                 gesture = GO_NOWHERE;
@@ -2039,16 +2039,16 @@ void check_state_machine()
          switch(touch_state[PREVIOUS].line)
          {
             case 0:
-                gesture = GO_RIGHT;
+                gesture = GO_NOWHERE;
               break;
             case 1:
-                gesture = GO_RIGHT;
+                gesture = GO_NOWHERE;
               break;
             case 2:
-                gesture = GO_RIGHT;
+                gesture = GO_NOWHERE;
               break;
             case 3:
-                gesture = GO_RIGHT;
+                gesture = GO_NOWHERE;
               break;
             case 4:
                 gesture = GO_DOWN;
@@ -2071,16 +2071,16 @@ void check_state_machine()
          switch(touch_state[PREVIOUS].line)
          {
             case 0:
-                gesture = GO_RIGHT;
+                gesture = GO_NOWHERE;
               break;
             case 1:
-                gesture = GO_RIGHT;
+                gesture = GO_NOWHERE;
               break;
             case 2:
-                gesture = GO_RIGHT;
+                gesture = GO_NOWHERE;
               break;
             case 3:
-                gesture = GO_RIGHT;
+                gesture = GO_NOWHERE;
               break;
             case 4:
                 gesture = GO_DOWN;
@@ -2103,16 +2103,16 @@ void check_state_machine()
          switch(touch_state[PREVIOUS].line)
          {
             case 0:
-                gesture = GO_RIGHT;
+                gesture = GO_NOWHERE;
               break;
             case 1:
-                gesture = GO_RIGHT;
+                gesture = GO_NOWHERE;
               break;
             case 2:
-                gesture = GO_RIGHT;
+                gesture = GO_NOWHERE;
               break;
             case 3:
-                gesture = GO_RIGHT;
+                gesture = GO_NOWHERE;
               break;
             case 4:
                 gesture = GO_DOWN;
@@ -2143,27 +2143,26 @@ void check_state_machine()
        case GO_UP:
           NRF_LOG_INFO("GO_UP");
           swipe_type = UP;
-          //timer_swipe_start();
+          timer_swipe_start();
         break;
        case GO_DOWN:
           NRF_LOG_INFO("GO_DOWN");
           swipe_type = DOWN;
-          //timer_swipe_start();
+          timer_swipe_start();
         break;
-         case GO_LEFT:
-          NRF_LOG_INFO("GO_LEFT");
-          swipe_type = LEFT;
-          //timer_swipe_start();
-        break;
-         case GO_RIGHT:
-          NRF_LOG_INFO("GO_RIGHT");
-          swipe_type = RIGHT;
-          //timer_swipe_start();
+//         case GO_LEFT:
+//          NRF_LOG_INFO("GO_LEFT");
+//          swipe_type = LEFT;
+//          //timer_swipe_start();
+//        break;
+//         case GO_RIGHT:
+//          NRF_LOG_INFO("GO_RIGHT");
+//          swipe_type = RIGHT;
+//          //timer_swipe_start();
         break;
          case GO_NOWHERE:
          lock_SM = false;
-          //NRF_LOG_INFO("GO_NOWHERE");
-        break;
+          //NRF_LOG_INFO("GO_NOWHERE");        break;
     }
      //digitizer_send(0, 1, m_x[sampling_line], m_y[sampling_line], true);
      //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d",touch_state[ACTUAL].x, touch_state[ACTUAL].y, true);
@@ -2190,8 +2189,8 @@ void check_state_machine()
   //update state machine
   touch_state[PREVIOUS].finger_state = touch_state[ACTUAL].finger_state;
   touch_state[PREVIOUS].sampling_number = touch_state[ACTUAL].sampling_number;
-  touch_state[PREVIOUS].x = touch_state[ACTUAL].x;
-  touch_state[PREVIOUS].y = touch_state[ACTUAL].y;
+//  touch_state[PREVIOUS].x = touch_state[ACTUAL].x;
+//  touch_state[PREVIOUS].y = touch_state[ACTUAL].y;
   touch_state[PREVIOUS].line = touch_state[ACTUAL].line;
 }
 
@@ -2202,13 +2201,20 @@ void activity()
      sampling_line = i;
      // Read data of capacitive driver, blocking until read
      read_sensorCAP_data(i);
-     if(data_read[sampling_line] > 25)
+     if(data_read[sampling_line] > 50)
      {
+
+//        NRF_LOG_INFO("data_read[sampling_line] =  %d", data_read[sampling_line]);
+
         //Touch detection
         touch_happened = true;
-        touch_state[ACTUAL].x = m_x[sampling_line];
-        touch_state[ACTUAL].y = m_y[sampling_line];
+//        touch_state[ACTUAL].x = m_x[sampling_line];
+//        touch_state[ACTUAL].y = m_y[sampling_line];
         touch_state[ACTUAL].line = sampling_line;
+
+//        NRF_LOG_INFO("touch_state[ACTUAL].finger_state = %d", touch_state[ACTUAL].finger_state);
+//        NRF_LOG_INFO("touch_state[ACTUAL].line = %d", touch_state[ACTUAL].line);
+//        NRF_LOG_INFO("touch_state[ACTUAL].sampling_number = %d", touch_state[ACTUAL].sampling_number);
      }
   }
 
@@ -2217,10 +2223,19 @@ void activity()
   {
     touch_state[ACTUAL].finger_state = TOUCH;
     touch_happened = false;
-  }else touch_state[ACTUAL].finger_state = RELEASE;
-  
-  touch_state[ACTUAL].sampling_number++;
 
+//    NRF_LOG_INFO("touch_state[ACTUAL].finger_state = %d", touch_state[ACTUAL].finger_state);
+//    NRF_LOG_INFO("touch_state[ACTUAL].line = %d", touch_state[ACTUAL].line);
+//    NRF_LOG_INFO("touch_state[ACTUAL].sampling_number = %d", touch_state[ACTUAL].sampling_number);
+
+  }else 
+  {
+    touch_state[ACTUAL].finger_state = RELEASE;
+  }
+
+  touch_state[ACTUAL].sampling_number++;
+  //NRF_LOG_INFO("touch_state[ACTUAL].sampling_number = %d", touch_state[ACTUAL].sampling_number);
+  
   //CHeck HERE!
   check_state_machine();
 }
