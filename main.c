@@ -187,6 +187,7 @@ enum SWIPE_TYPE{
   RIGHT,
   UP,
   DOWN,
+  CLICK,
   UNKNOW,
 };
 
@@ -223,6 +224,7 @@ static volatile bool flag_sampling = false;
 static uint8_t touch_happened = false;
 static touch_state_t touch_state [2];
 static bool lock_SM = false;
+static bool lock_Click = false;
 static uint8_t gesture;
 
 static uint8_t cpt = 0;     
@@ -673,6 +675,20 @@ static void swipe_timeout_handler(void * p_context)
                 cpt = 0;
             }
             break;
+
+        case CLICK:
+        y = 31000;
+        x = 15500;
+        cpt++;
+        digitizer_send(0, 1, x, y, true);
+        NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, true);
+        if(cpt == 5) {
+            digitizer_send(0, 1, x, y, false);
+            NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d",x, y, false);
+            timer_swipe_stop();
+            cpt = 0;           
+        }
+        break;
 
         default:
             // No implementation needed.
@@ -2194,16 +2210,71 @@ void check_state_machine()
   touch_state[PREVIOUS].line = touch_state[ACTUAL].line;
 }
 
+void check_for_force(uint8_t channel)
+{
+
+    channel++;
+    uint8_t resistive_pixel;
+
+    if( (channel == 1) || (channel ==2) )
+    {
+      resistive_pixel = 3;
+      mux_switch(resistive_pixel);
+      //NRF_LOG_INFO("switch 3");
+    }else if( (channel == 2) || (channel == 3) )
+    {
+      resistive_pixel = 2;
+      mux_switch(resistive_pixel);
+      //NRF_LOG_INFO("switch 2");
+    }else if( (channel == 3) || (channel == 4) )
+    {
+      resistive_pixel = 1;
+      mux_switch(resistive_pixel);
+      //NRF_LOG_INFO("switch 1");
+    }else if( (channel == 5) || (channel == 6) )
+    {
+      resistive_pixel = 6;
+      mux_switch(resistive_pixel);
+      //NRF_LOG_INFO("switch 2");
+    }else if( (channel == 6) || (channel == 7) )
+    {
+      resistive_pixel = 5;
+      mux_switch(resistive_pixel);
+      //NRF_LOG_INFO("switch 1");
+    }else if( (channel == 7) || (channel == 8) )
+    {
+      resistive_pixel = 4;
+      mux_switch(resistive_pixel);
+      //NRF_LOG_INFO("switch 2");
+    }
+
+      // Sampling, block until get data
+      saadc_sample();
+      while(!m_sampling_done);
+      m_sampling_done = false;
+    
+    // Decrement wiper data to be in the bridge middle point
+    if(adc_result_in_milli_volts < 1250)
+    {
+        NRF_LOG_INFO("CLICK %d ", resistive_pixel);
+        NRF_LOG_FLUSH();
+         
+          swipe_type = CLICK;
+          timer_swipe_start();
+    }
+
+}
+
 void activity()
 {   
   for(uint8_t i=0; i<8; i++)
   {
      sampling_line = i;
      // Read data of capacitive driver, blocking until read
-     read_sensorCAP_data(i);
-     if(data_read[sampling_line] > 50)
+     read_sensorCAP_data(sampling_line);
+     if( (data_read[sampling_line] > 50) )
      {
-
+        check_for_force(sampling_line);
 //        NRF_LOG_INFO("data_read[sampling_line] =  %d", data_read[sampling_line]);
 
         //Touch detection
