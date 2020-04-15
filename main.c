@@ -224,7 +224,7 @@ static volatile bool flag_sampling = false;
 static uint8_t touch_happened = false;
 static touch_state_t touch_state [2];
 static bool lock_SM = false;
-static bool lock_Click = false;
+static bool lock_click = false;
 static uint8_t gesture;
 
 static uint8_t cpt = 0;     
@@ -625,10 +625,10 @@ static void swipe_timeout_handler(void * p_context)
             x = (30000) - cpt*2500;
             cpt++;
             digitizer_send(0, 1, x, y, true);
-            NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, true);
+            //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, true);
             if(cpt == 5) {
                 digitizer_send(0, 1, x, y, false);
-                NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d",x, y, false);
+                //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d",x, y, false);
                 timer_swipe_stop();
                 cpt = 0;
             }
@@ -639,10 +639,10 @@ static void swipe_timeout_handler(void * p_context)
             x = cpt*2500;
             cpt++;
             digitizer_send(0, 1, x, y, true);
-            NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, true);
+            //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, true);
             if(cpt == 5) {
                 digitizer_send(0, 1, x, y, false);
-                NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, false);
+                //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, false);
                 timer_swipe_stop();
                 cpt = 0;
             }
@@ -653,10 +653,10 @@ static void swipe_timeout_handler(void * p_context)
             x = 0;
             cpt++;
             digitizer_send(0, 1, x, y, true);
-            NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, true);
+            //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, true);
             if(cpt == 5) {
                 digitizer_send(0, 1, x, y, false);
-                NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, false);
+                //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, false);
                 timer_swipe_stop();
                 cpt = 0;
             }
@@ -667,10 +667,10 @@ static void swipe_timeout_handler(void * p_context)
             x = 0;
             cpt++;
             digitizer_send(0, 1, x, y, true);
-            NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, true);
+            //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, true);
             if(cpt == 5) {
                 digitizer_send(0, 1, x, y, false);
-                NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, false);
+                //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, false);
                 timer_swipe_stop();
                 cpt = 0;
             }
@@ -681,10 +681,10 @@ static void swipe_timeout_handler(void * p_context)
         x = 15500;
         cpt++;
         digitizer_send(0, 1, x, y, true);
-        NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, true);
+        //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, true);
         if(cpt == 5) {
             digitizer_send(0, 1, x, y, false);
-            NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d",x, y, false);
+            //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d",x, y, false);
             timer_swipe_stop();
             cpt = 0;           
         }
@@ -1870,6 +1870,7 @@ void check_state_machine()
   {
     //NRF_LOG_INFO("REALEASE -> LINE %d",touch_state[ACTUAL].line);
     lock_SM = false;
+    lock_click = false;
     //digitizer_send(0, 1, touch_state[ACTUAL].x, touch_state[ACTUAL].y, false);
     //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d",touch_state[ACTUAL].x, touch_state[ACTUAL].y, false);
   }
@@ -1886,7 +1887,8 @@ void check_state_machine()
 // TOUCH detect when pixel is changing
  if((touch_state[ACTUAL].finger_state == TOUCH) && (touch_state[PREVIOUS].finger_state == TOUCH)
     && (touch_state[ACTUAL].line != touch_state[PREVIOUS].line) 
-    && (!lock_SM) )
+    && (!lock_SM)
+    && (!lock_click))
  {
     //NRF_LOG_INFO("CHANGE PIXEL TOUCH -> LINE %d", touch_state[ACTUAL].line);
 
@@ -2216,7 +2218,7 @@ void check_for_force(uint8_t channel)
     channel++;
     uint8_t resistive_pixel;
 
-    if( (channel == 1) || (channel ==2) )
+    if( (channel == 1) || (channel == 2) )
     {
       resistive_pixel = 3;
       mux_switch(resistive_pixel);
@@ -2256,11 +2258,18 @@ void check_for_force(uint8_t channel)
     // Decrement wiper data to be in the bridge middle point
     if(adc_result_in_milli_volts < 1250)
     {
-        NRF_LOG_INFO("CLICK %d ", resistive_pixel);
-        NRF_LOG_FLUSH();
-         
+//        NRF_LOG_INFO("CLICK %d ", resistive_pixel);
+//        NRF_LOG_FLUSH();
+          
           swipe_type = CLICK;
-          timer_swipe_start();
+
+          if(!lock_click)
+          {
+            NRF_LOG_INFO("CLICK %d ", resistive_pixel);
+            timer_swipe_start();
+            lock_click = true;
+          }
+
     }
 
 }
@@ -2307,8 +2316,10 @@ void activity()
   touch_state[ACTUAL].sampling_number++;
   //NRF_LOG_INFO("touch_state[ACTUAL].sampling_number = %d", touch_state[ACTUAL].sampling_number);
   
-  //CHeck HERE!
+  //Check HERE
   check_state_machine();
+  
+  
 }
 
 /**@brief Function for application main entry.
