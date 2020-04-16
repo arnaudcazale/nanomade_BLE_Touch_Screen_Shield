@@ -103,7 +103,7 @@
 
 #define BATTERY_LEVEL_MEAS_INTERVAL     APP_TIMER_TICKS(2000)                       /**< Battery level measurement interval (ticks). */
 #define SWIPE_INTERVAL                  APP_TIMER_TICKS(20)                                                /**< Sampling timer. */
-#define SAMPLING_INTERVAL               APP_TIMER_TICKS(50)                         /**< Battery level measurement interval (ticks). */
+#define SAMPLING_INTERVAL               APP_TIMER_TICKS(10)                         /**< Battery level measurement interval (ticks). */
 #define MIN_BATTERY_LEVEL               81                                          /**< Minimum simulated battery level. */
 #define MAX_BATTERY_LEVEL               100                                         /**< Maximum simulated battery level. */
 #define BATTERY_LEVEL_INCREMENT         1                                           /**< Increment between each simulated battery level measurement. */
@@ -187,7 +187,7 @@ enum SWIPE_TYPE{
   RIGHT,
   UP,
   DOWN,
-  CLICK,
+  FORCE,
   UNKNOW,
 };
 
@@ -207,6 +207,7 @@ enum TOUCH_MOMENT{
 enum TOUCH_STATE{
   RELEASE,
   TOUCH,
+  CLICK,
 };
 
 typedef PACKED_STRUCT
@@ -244,6 +245,8 @@ bool flag_connected = false;
 static uint8_t current_state = RELEASE;
 static uint8_t previous_state = RELEASE;
 
+static uint32_t sampling_number;
+
 /* Indicates if operation on SPI has ended. */
 static volatile bool spi_xfer_done;  
 static uint8_t       m_tx_buf[] = {((uint8_t)0x00),((uint8_t)0x00)}; 
@@ -276,9 +279,10 @@ static uint8_t sampling_line;
 static double force[] = {0,0,0,0,0,0};
 static double force_init [] = {0,0,0,0,0,0};
 static double force_delta [] = {0,0,0,0,0,0};
-static uint16_t force_threshold = 500;
-static uint8_t capa_threshold = 50;
+static uint16_t force_threshold = 400;
+static uint8_t capa_threshold = 25;
 static bool flag_first_time[] = {true, true, true, true, true, true};
+static bool flag_touch[] = {false, false, false, false, false, false};
 
 /* SAADC */
 #define ADC_REF_VOLTAGE_IN_MILLIVOLTS   600                                     /**< Reference voltage (in milli volts) used by ADC while doing conversion. */
@@ -682,7 +686,7 @@ static void swipe_timeout_handler(void * p_context)
             }
             break;
 
-        case CLICK:
+        case FORCE:
         y = 31000;
         x = 15500;
         cpt++;
@@ -1707,6 +1711,15 @@ static void CAP1208_init(void)
     m_xfer_done = false;
 
     NRF_LOG_INFO("CHIP ID = %X", cmd_read);
+
+    //Write SENSOR INPUT ENABLE (Register 0x21)
+    reg[0] = 0x21;
+    reg[1] = 0xFF;
+    err_code = nrf_drv_twi_tx(&m_twi, CAP1208_ADDR, reg, 2, false);
+    APP_ERROR_CHECK(err_code);
+    while (!m_xfer_done);
+    m_xfer_done = false;
+
     NRF_LOG_INFO("Stop CAP1208_init.");
 }
 
@@ -1866,34 +1879,171 @@ void state_machine_init()
     //gesture = GO_NOWHERE;
 }
 
-void check_state_machine()
+void check_capa()
+{
+  for(uint8_t i=0; i<8; i++)
+  {
+     //important for SPI capa handler
+     sampling_line = i;
+
+     // Read data of capacitive driver, blocking until read
+     read_sensorCAP_data(i);
+     //NRF_LOG_INFO("CAPA READ[%d] = %d", i, capa[i]);
+  }
+}
+
+void check_force()
+{
+  for(uint8_t i=0; i<6; i++)
+  {
+      mux_switch(i+1);
+      // Sampling, block until get data
+      saadc_sample();
+      while(!m_sampling_done);
+      m_sampling_done = false;
+      force[i] = adc_result_in_milli_volts;
+      //NRF_LOG_INFO("FORCE READ[%d] = %d", i, force[i]);
+
+      switch(i)
+      {
+        case 0:
+          if( (capa[2] > capa_threshold) || (capa[3] > capa_threshold) )
+          {
+            //flag_touch[i] = true;
+            if (flag_first_time[i]) 
+            {
+                flag_first_time[i] = false;
+                force_init[i] = force[i];
+            }
+
+            force_delta[i] = force_init[i] - force[i];
+          }else{
+            //flag_touch[i] = false;
+            flag_first_time[i] = true;
+            force_delta[i] = 0;
+          }
+          break;
+
+        case 1:
+          if( (capa[1] > capa_threshold) || (capa[2] > capa_threshold) )
+          {
+            //flag_touch[i] = true;
+            if (flag_first_time[i]) 
+            {
+                flag_first_time[i] = false;
+                force_init[i] = force[i];
+            }
+
+            force_delta[i] = force_init[i] - force[i];
+          }else{
+            //flag_touch[i] = false;
+            flag_first_time[i] = true;
+            force_delta[i] = 0;
+          }
+        break;
+
+        case 2:
+          if( (capa[0] > capa_threshold) || (capa[1] > capa_threshold) )
+          {
+            //flag_touch[i] = true;
+            if (flag_first_time[i]) 
+            {
+                flag_first_time[i] = false;
+                force_init[i] = force[i];
+            }
+
+            force_delta[i] = force_init[i] - force[i];
+          }else{
+            //flag_touch[i] = false;
+            flag_first_time[i] = true;
+            force_delta[i] = 0;
+          }
+        break;
+
+        case 3:
+          if( (capa[6] > capa_threshold) || (capa[7] > capa_threshold) )
+          {
+            //flag_touch[i] = true;
+            if (flag_first_time[i]) 
+            {
+                flag_first_time[i] = false;
+                force_init[i] = force[i];
+            }
+
+            force_delta[i] = force_init[i] - force[i];
+          }else{
+            //flag_touch[i] = false;
+            flag_first_time[i] = true;
+            force_delta[i] = 0;
+          }
+        break;
+
+        case 4:
+          if( (capa[5] > capa_threshold) || (capa[6] > capa_threshold) )
+          {
+            //flag_touch[i] = true;
+            if (flag_first_time[i]) 
+            {
+                flag_first_time[i] = false;
+                force_init[i] = force[i];
+            }
+
+            force_delta[i] = force_init[i] - force[i];
+          }else{
+            //flag_touch[i] = false;
+            flag_first_time[i] = true;
+            force_delta[i] = 0;
+          }
+        break;
+
+        case 5:
+          if( (capa[4] > capa_threshold) || (capa[5] > capa_threshold) )
+          {
+            //flag_touch[i] = true;
+            if (flag_first_time[i]) 
+            {
+                flag_first_time[i] = false;
+                force_init[i] = force[i];
+            }
+
+            force_delta[i] = force_init[i] - force[i];
+          }else{
+            //flag_touch[i] = false;
+            flag_first_time[i] = true;
+            force_delta[i] = 0;
+          }
+        break;
+      }
+      //NRF_LOG_INFO("FORCE DELTA READ[%d] = %d", i, force_delta[i]);
+  }
+
+}
+
+void state_machine_process()
 {
   // RELEASE detect
   if( (touch_state[ACTUAL].finger_state == RELEASE) && (touch_state[PREVIOUS].finger_state == TOUCH) )
   {
-    //NRF_LOG_INFO("REALEASE -> LINE %d",touch_state[ACTUAL].line);
     lock_SM = false;
     lock_click = false;
-    //digitizer_send(0, 1, touch_state[ACTUAL].x, touch_state[ACTUAL].y, false);
-    //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d",touch_state[ACTUAL].x, touch_state[ACTUAL].y, false);
+    //NRF_LOG_INFO("RELEASE -> LINE %d",touch_state[ACTUAL].line);
   }
 
-  //FIRST TOUCH detect
-//  if((touch_state[ACTUAL].finger_state == TOUCH) && (touch_state[PREVIOUS].finger_state == RELEASE)
-//    || (touch_state[ACTUAL].line != touch_state[PREVIOUS].line) )
-//  {
-//     NRF_LOG_INFO("FIRST TOUCH -> LINE %d", touch_state[ACTUAL].line);
-//     //digitizer_send(0, 1, m_x[sampling_line], m_y[sampling_line], true);
-//     //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d",touch_state[ACTUAL].x, touch_state[ACTUAL].y, true);
-//  }
+  // CLICK detect
+  if( (touch_state[ACTUAL].finger_state == CLICK) && !lock_click)
+  {
+    lock_click = true;
+    NRF_LOG_INFO("CLICK -> LINE %d",touch_state[ACTUAL].line);
+  }
 
-// TOUCH detect when pixel is changing
+ // TOUCH detect when pixel is changing
  if((touch_state[ACTUAL].finger_state == TOUCH) && (touch_state[PREVIOUS].finger_state == TOUCH)
     && (touch_state[ACTUAL].line != touch_state[PREVIOUS].line) 
-    && (!lock_SM)
-    && (!lock_click))
+    && !lock_SM
+    && !lock_click) 
  {
-    //NRF_LOG_INFO("CHANGE PIXEL TOUCH -> LINE %d", touch_state[ACTUAL].line);
+    lock_SM = true;
+    //NRF_LOG_INFO("MOVEMENT");
 
     switch(touch_state[ACTUAL].line)
     {
@@ -2157,8 +2307,6 @@ void check_state_machine()
 
     }
 
-    lock_SM = true;
-
     switch(gesture)
     {
        case GO_UP:
@@ -2171,224 +2319,72 @@ void check_state_machine()
           swipe_type = DOWN;
           timer_swipe_start();
         break;
-//         case GO_LEFT:
-//          NRF_LOG_INFO("GO_LEFT");
-//          swipe_type = LEFT;
-//          //timer_swipe_start();
-//        break;
-//         case GO_RIGHT:
-//          NRF_LOG_INFO("GO_RIGHT");
-//          swipe_type = RIGHT;
-//          //timer_swipe_start();
-        break;
-         case GO_NOWHERE:
-         lock_SM = false;
-          //NRF_LOG_INFO("GO_NOWHERE");        break;
     }
-     //digitizer_send(0, 1, m_x[sampling_line], m_y[sampling_line], true);
-     //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d",touch_state[ACTUAL].x, touch_state[ACTUAL].y, true);
+
  }
-
-  // LONG TOUCH detect
-//  if( (touch_state[ACTUAL].finger_state == TOUCH) && (touch_state[PREVIOUS].finger_state == TOUCH) )
-//  {
-//    NRF_LOG_INFO("SAME TOUCH -> LINE %d",touch_state[ACTUAL].line);
-//    //digitizer_send(0, 1, m_x[sampling_line], m_y[sampling_line], true);
-//    //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d",touch_state[ACTUAL].x, touch_state[ACTUAL].y, true);
-//  }
-
-//#define LOG_DEBUG
-#ifdef LOG_DEBUG
-    //Display state machine
-    NRF_LOG_INFO("touch_state[ACTUAL].finger_state = %d", touch_state[ACTUAL].finger_state);
-    NRF_LOG_INFO("touch_state[ACTUAL].sampling_number = %d", touch_state[ACTUAL].sampling_number);
-    NRF_LOG_INFO("touch_state[PREVIOUS].finger_state = %d", touch_state[PREVIOUS].finger_state);
-    NRF_LOG_INFO("touch_state[PREVIOUS].sampling_number = %d", touch_state[PREVIOUS].sampling_number);
-    NRF_LOG_INFO("************************************");
-#endif
 
   //update state machine
   touch_state[PREVIOUS].finger_state = touch_state[ACTUAL].finger_state;
-  touch_state[PREVIOUS].sampling_number = touch_state[ACTUAL].sampling_number;
-//  touch_state[PREVIOUS].x = touch_state[ACTUAL].x;
-//  touch_state[PREVIOUS].y = touch_state[ACTUAL].y;
   touch_state[PREVIOUS].line = touch_state[ACTUAL].line;
+
 }
 
-void check_capa()
+void state_machine_update()
 {
-  for(uint8_t i=0; i<8; i++)
+  //Check capa
+  for (uint8_t i = 0; i<8; i++)
   {
-     //important for SPI capa handler
-     sampling_line = i;
-
-     // Read data of capacitive driver, blocking until read
-     read_sensorCAP_data(i);
-     NRF_LOG_INFO("CAPA READ[%d] = %d", i, capa[i]);
+    if(capa[i] > capa_threshold)
+    {
+      touch_state[ACTUAL].line = i;
+      touch_happened = true;
+    }
   }
+
+  // Update capa
+  if(touch_happened)
+  {
+    touch_state[ACTUAL].finger_state = TOUCH;
+    touch_happened =false;
+  }else{
+    touch_state[ACTUAL].finger_state = RELEASE;
+  }
+
+  //Check force
+  for (uint8_t i = 0; i<6; i++)
+  {
+    if(force_delta[i] > force_threshold)
+    {
+      touch_state[ACTUAL].finger_state = CLICK;
+      touch_state[ACTUAL].line = i;
+    }
+  }
+
+  state_machine_process();
+
+//  sampling_number++;
+//  touch_state[ACTUAL].sampling_number = sampling_number; 
+//  NRF_LOG_INFO("*********************************************");
+//  NRF_LOG_INFO("touch_state[ACTUAL].sampling_number = %d", touch_state[ACTUAL].sampling_number);
+//  NRF_LOG_INFO("touch_state[ACTUAL].finger_state = %d", touch_state[ACTUAL].finger_state);
+//  NRF_LOG_INFO("touch_state[ACTUAL].line = %d", touch_state[ACTUAL].line);
+  
+
 }
 
-void check_force()
-{
-  for(uint8_t i=0; i<6; i++)
-  {
-      mux_switch(i+1);
-      // Sampling, block until get data
-      saadc_sample();
-      while(!m_sampling_done);
-      m_sampling_done = false;
-      force[i] = adc_result_in_milli_volts;
-      //NRF_LOG_INFO("FORCE READ[%d] = %d", i, force[i]);
 
-      switch(i)
-      {
-        case 0:
-          if( (capa[2] > capa_threshold) || (capa[3] > capa_threshold) )
-          {
-            //flag_touch[i] = true;
-            if (flag_first_time[i]) 
-            {
-                flag_first_time[i] = false;
-                force_init[i] = force[i];
-            }
-
-            force_delta[i] = force_init[i] - force[i];
-          }else{
-            //flag_touch[i] = false;
-            flag_first_time[i] = true;
-            force_delta[i] = 0;
-          }
-          break;
-
-        case 1:
-          if( (capa[1] > capa_threshold) || (capa[2] > capa_threshold) )
-          {
-            //flag_touch[i] = true;
-            if (flag_first_time[i]) 
-            {
-                flag_first_time[i] = false;
-                force_init[i] = force[i];
-            }
-
-            force_delta[i] = force_init[i] - force[i];
-          }else{
-            //flag_touch[i] = false;
-            flag_first_time[i] = true;
-            force_delta[i] = 0;
-          }
-        break;
-
-        case 2:
-          if( (capa[0] > capa_threshold) || (capa[1] > capa_threshold) )
-          {
-            //flag_touch[i] = true;
-            if (flag_first_time[i]) 
-            {
-                flag_first_time[i] = false;
-                force_init[i] = force[i];
-            }
-
-            force_delta[i] = force_init[i] - force[i];
-          }else{
-            //flag_touch[i] = false;
-            flag_first_time[i] = true;
-            force_delta[i] = 0;
-          }
-        break;
-
-        case 3:
-          if( (capa[6] > capa_threshold) || (capa[7] > capa_threshold) )
-          {
-            //flag_touch[i] = true;
-            if (flag_first_time[i]) 
-            {
-                flag_first_time[i] = false;
-                force_init[i] = force[i];
-            }
-
-            force_delta[i] = force_init[i] - force[i];
-          }else{
-            //flag_touch[i] = false;
-            flag_first_time[i] = true;
-            force_delta[i] = 0;
-          }
-        break;
-
-        case 4:
-          if( (capa[5] > capa_threshold) || (capa[6] > capa_threshold) )
-          {
-            //flag_touch[i] = true;
-            if (flag_first_time[i]) 
-            {
-                flag_first_time[i] = false;
-                force_init[i] = force[i];
-            }
-
-            force_delta[i] = force_init[i] - force[i];
-          }else{
-            //flag_touch[i] = false;
-            flag_first_time[i] = true;
-            force_delta[i] = 0;
-          }
-        break;
-
-        case 5:
-          if( (capa[4] > capa_threshold) || (capa[5] > capa_threshold) )
-          {
-            //flag_touch[i] = true;
-            if (flag_first_time[i]) 
-            {
-                flag_first_time[i] = false;
-                force_init[i] = force[i];
-            }
-
-            force_delta[i] = force_init[i] - force[i];
-          }else{
-            //flag_touch[i] = false;
-            flag_first_time[i] = true;
-            force_delta[i] = 0;
-          }
-        break;
-      }
-
-      NRF_LOG_INFO("FORCE DELTA READ[%d] = %d", i, force_delta[i]);
-  }
-}
 
 void activity()
 {   
   check_capa();
   check_force();
-
-  //update actual state
-//  if(touch_happened)
-//  {
-//    touch_state[ACTUAL].finger_state = TOUCH;
-//    touch_happened = false;
-//
-////    NRF_LOG_INFO("touch_state[ACTUAL].finger_state = %d", touch_state[ACTUAL].finger_state);
-////    NRF_LOG_INFO("touch_state[ACTUAL].line = %d", touch_state[ACTUAL].line);
-////    NRF_LOG_INFO("touch_state[ACTUAL].sampling_number = %d", touch_state[ACTUAL].sampling_number);
-////    NRF_LOG_INFO("****************************************");
-//
-//  }else 
-//  {
-//    touch_state[ACTUAL].finger_state = RELEASE;
-//  }
-
- // touch_state[ACTUAL].sampling_number++;
-  //NRF_LOG_INFO("touch_state[ACTUAL].sampling_number = %d", touch_state[ACTUAL].sampling_number);
-  
-  //Check HERE
- // check_state_machine();
-  
-  
+  state_machine_update();  
 }
 
 /**@brief Function for application main entry.
  */
 int main(void)
-     {
+{
     bool erase_bonds;
 
     // Initialize.
@@ -2432,12 +2428,12 @@ int main(void)
 
         if( flag_sampling && flag_connected)
         {
-           //NRF_LOG_INFO("sampling_number %d", sampling_number); 
            // Run code previously in timeout handler   
            activity();
            flag_sampling = false;
         }
     }
+
 }
 
 
