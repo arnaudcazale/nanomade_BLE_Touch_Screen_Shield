@@ -280,7 +280,7 @@ static const nrf_drv_twi_t m_twi = NRF_DRV_TWI_INSTANCE(TWI_INSTANCE_ID);
 uint8_t reg[2] = {0xFD, 0x00};
 static uint8_t cmd_read;
 static double capa[] = {0,0,0,0,0,0,0,0};
-static uint8_t buffer_capa[8][5];
+static uint8_t buffer_capa[8][10];
 static uint8_t buffer_rank = 0;
 
 static uint8_t sampling_line;
@@ -1885,12 +1885,20 @@ void state_machine_init()
     touch_state[ACTUAL].sampling_number = 0;
     touch_state[ACTUAL].finger_state = RELEASE;
     //gesture = GO_NOWHERE;
+
+    for(uint8_t i = 0; i<10; i++)
+    {
+      for(uint8_t j = 0; j<8; j++)
+      {
+        buffer_capa[j][i] = 0;
+      }
+    }
 }
 
 void bufferize()
 {
 
-  for(uint8_t i = 0; i<4; i++)
+  for(uint8_t i = 0; i<9; i++)
   {
     for(uint8_t j = 0; j<8; j++)
     {
@@ -1900,14 +1908,14 @@ void bufferize()
 
   for(uint8_t j = 0; j<8; j++)
   {
-    buffer_capa[j][4] = capa[j];
+    buffer_capa[j][9] = capa[j];
   }
 
   //LOG 
   NRF_LOG_INFO("samling_number = %d", sampling_number);
   for(uint8_t i = 0; i<8; i++)
   {
-    NRF_LOG_INFO("BUFFER_CAPA[%d] = [%d %d %d %d %d] ", i, buffer_capa[i][0], buffer_capa[i][1], buffer_capa[i][2], buffer_capa[i][3], buffer_capa[i][4]);
+    NRF_LOG_HEXDUMP_INFO(buffer_capa[i], 10);
   }
     
   sampling_number++;
