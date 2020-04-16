@@ -30,6 +30,7 @@
 "Output/ble_app_hids_mouse_pca10040_s132 Debug/Obj/nrf_section_iter.o"
 "Output/ble_app_hids_mouse_pca10040_s132 Debug/Obj/nrf_strerror.o"
 "Output/ble_app_hids_mouse_pca10040_s132 Debug/Obj/sensorsim.o"
+"Output/ble_app_hids_mouse_pca10040_s132 Debug/Obj/nrf_queue.o"
 "Output/ble_app_hids_mouse_pca10040_s132 Debug/Obj/ses_startup_nrf52.o"
 "Output/ble_app_hids_mouse_pca10040_s132 Debug/Obj/ses_startup_nrf_common.o"
 "Output/ble_app_hids_mouse_pca10040_s132 Debug/Obj/system_nrf52.o"

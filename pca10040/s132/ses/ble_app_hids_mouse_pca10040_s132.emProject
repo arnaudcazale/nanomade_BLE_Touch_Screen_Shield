@@ -69,6 +69,7 @@
       <file file_name="../../../../../../components/libraries/experimental_section_vars/nrf_section_iter.c" />
       <file file_name="../../../../../../components/libraries/strerror/nrf_strerror.c" />
       <file file_name="../../../../../../components/libraries/sensorsim/sensorsim.c" />
+      <file file_name="../../../../../../components/libraries/queue/nrf_queue.c" />
     </folder>
     <folder Name="None">
       <file file_name="../../../../../../modules/nrfx/mdk/ses_startup_nrf52.s" />
@@ -147,7 +148,7 @@
     <file file_name="test.h" />
     <configuration
       Name="Debug"
-      c_user_include_directories="../../../../../../integration/nrfx/legacy;../../../../../../modules/nrfx/drivers/src;../../../../../../components/ble/ble_radio_notification" />
+      c_user_include_directories="../../../../../../integration/nrfx/legacy;../../../../../../modules/nrfx/drivers/src;../../../../../../components/ble/ble_radio_notification;../../../../../../components/libraries/queue" />
   </project>
   <configuration
     Name="Release"

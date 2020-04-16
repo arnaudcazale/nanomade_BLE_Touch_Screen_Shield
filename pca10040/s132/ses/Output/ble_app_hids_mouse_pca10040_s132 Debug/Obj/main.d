@@ -137,4 +137,5 @@ Output/ble_app_hids_mouse_pca10040_s132\ Debug/Obj/main.o: \
  ../../../../../../modules/nrfx/hal/nrf_twi.h \
  ../../../../../../integration/nrfx/legacy/nrf_drv_saadc.h \
  ../../../../../../modules/nrfx/drivers/include/nrfx_saadc.h \
- ../../../../../../modules/nrfx/hal/nrf_saadc.h
+ ../../../../../../modules/nrfx/hal/nrf_saadc.h \
+ ../../../../../../components/libraries/queue/nrf_queue.h
