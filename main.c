@@ -274,6 +274,11 @@ static uint8_t cmd_read;
 static double capa[] = {0,0,0,0,0,0,0,0};
 static uint8_t sampling_line;
 static double force[] = {0,0,0,0,0,0};
+static double force_init [] = {0,0,0,0,0,0};
+static double force_delta [] = {0,0,0,0,0,0};
+static uint16_t force_threshold = 500;
+static uint8_t capa_threshold = 50;
+static bool flag_first_time[] = {true, true, true, true, true, true};
 
 /* SAADC */
 #define ADC_REF_VOLTAGE_IN_MILLIVOLTS   600                                     /**< Reference voltage (in milli volts) used by ADC while doing conversion. */
@@ -2214,7 +2219,9 @@ void check_capa()
 {
   for(uint8_t i=0; i<8; i++)
   {
-     //sampling_line = i;
+     //important for SPI capa handler
+     sampling_line = i;
+
      // Read data of capacitive driver, blocking until read
      read_sensorCAP_data(i);
      NRF_LOG_INFO("CAPA READ[%d] = %d", i, capa[i]);
@@ -2231,10 +2238,121 @@ void check_force()
       while(!m_sampling_done);
       m_sampling_done = false;
       force[i] = adc_result_in_milli_volts;
-      NRF_LOG_INFO("FORCE READ[%d] = %d", i, force[i]);
+      //NRF_LOG_INFO("FORCE READ[%d] = %d", i, force[i]);
+
+      switch(i)
+      {
+        case 0:
+          if( (capa[2] > capa_threshold) || (capa[3] > capa_threshold) )
+          {
+            //flag_touch[i] = true;
+            if (flag_first_time[i]) 
+            {
+                flag_first_time[i] = false;
+                force_init[i] = force[i];
+            }
+
+            force_delta[i] = force_init[i] - force[i];
+          }else{
+            //flag_touch[i] = false;
+            flag_first_time[i] = true;
+            force_delta[i] = 0;
+          }
+          break;
+
+        case 1:
+          if( (capa[1] > capa_threshold) || (capa[2] > capa_threshold) )
+          {
+            //flag_touch[i] = true;
+            if (flag_first_time[i]) 
+            {
+                flag_first_time[i] = false;
+                force_init[i] = force[i];
+            }
+
+            force_delta[i] = force_init[i] - force[i];
+          }else{
+            //flag_touch[i] = false;
+            flag_first_time[i] = true;
+            force_delta[i] = 0;
+          }
+        break;
+
+        case 2:
+          if( (capa[0] > capa_threshold) || (capa[1] > capa_threshold) )
+          {
+            //flag_touch[i] = true;
+            if (flag_first_time[i]) 
+            {
+                flag_first_time[i] = false;
+                force_init[i] = force[i];
+            }
+
+            force_delta[i] = force_init[i] - force[i];
+          }else{
+            //flag_touch[i] = false;
+            flag_first_time[i] = true;
+            force_delta[i] = 0;
+          }
+        break;
+
+        case 3:
+          if( (capa[6] > capa_threshold) || (capa[7] > capa_threshold) )
+          {
+            //flag_touch[i] = true;
+            if (flag_first_time[i]) 
+            {
+                flag_first_time[i] = false;
+                force_init[i] = force[i];
+            }
+
+            force_delta[i] = force_init[i] - force[i];
+          }else{
+            //flag_touch[i] = false;
+            flag_first_time[i] = true;
+            force_delta[i] = 0;
+          }
+        break;
+
+        case 4:
+          if( (capa[5] > capa_threshold) || (capa[6] > capa_threshold) )
+          {
+            //flag_touch[i] = true;
+            if (flag_first_time[i]) 
+            {
+                flag_first_time[i] = false;
+                force_init[i] = force[i];
+            }
+
+            force_delta[i] = force_init[i] - force[i];
+          }else{
+            //flag_touch[i] = false;
+            flag_first_time[i] = true;
+            force_delta[i] = 0;
+          }
+        break;
+
+        case 5:
+          if( (capa[4] > capa_threshold) || (capa[5] > capa_threshold) )
+          {
+            //flag_touch[i] = true;
+            if (flag_first_time[i]) 
+            {
+                flag_first_time[i] = false;
+                force_init[i] = force[i];
+            }
+
+            force_delta[i] = force_init[i] - force[i];
+          }else{
+            //flag_touch[i] = false;
+            flag_first_time[i] = true;
+            force_delta[i] = 0;
+          }
+        break;
+      }
+
+      NRF_LOG_INFO("FORCE DELTA READ[%d] = %d", i, force_delta[i]);
   }
-     
-   
 }
 
 void activity()
