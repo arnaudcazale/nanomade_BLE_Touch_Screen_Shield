@@ -1542,10 +1542,7 @@ static void idle_state_handle(void)
 void ble_on_radio_active_evt(bool radio_active)
 {
     current_radio_active_state = radio_active;
-    if(radio_active)
-    {
-      bsp_board_led_on(1);
-    }else bsp_board_led_off(1);
+    bsp_board_led_invert(1);
 }
 
 void saadc_event_handler(nrf_drv_saadc_evt_t const * p_event)
@@ -1679,7 +1676,7 @@ static void radio_notification_init(void)
 {
     uint32_t err_code;
 
-    err_code = ble_radio_notification_init(APP_IRQ_PRIORITY_LOW,
+    err_code = ble_radio_notification_init(APP_IRQ_PRIORITY_HIGH,
                                            NRF_RADIO_NOTIFICATION_DISTANCE_800US,
                                            ble_on_radio_active_evt);
     APP_ERROR_CHECK(err_code);
@@ -1711,7 +1708,7 @@ static void MAX_9939_init()
 {
 
     uint8_t command[1]; 
-    command[0] = 0xc0; //Gain a 20
+    command[0] = 0xa0; //Gain a 30
     
     nrf_gpio_pin_clear(SPI_SS_PIN_AMP);
     APP_ERROR_CHECK(nrf_drv_spi_transfer(&spi, command, sizeof(command), NULL, NULL));
@@ -2307,6 +2304,7 @@ void activity()
 //    NRF_LOG_INFO("touch_state[ACTUAL].finger_state = %d", touch_state[ACTUAL].finger_state);
 //    NRF_LOG_INFO("touch_state[ACTUAL].line = %d", touch_state[ACTUAL].line);
 //    NRF_LOG_INFO("touch_state[ACTUAL].sampling_number = %d", touch_state[ACTUAL].sampling_number);
+//    NRF_LOG_INFO("****************************************");
 
   }else 
   {
@@ -2334,7 +2332,7 @@ int main(void)
     buttons_leds_init(&erase_bonds);
     power_management_init();
     ble_stack_init();
-    //radio_notification_init();
+    radio_notification_init();
     scheduler_init();
     gap_params_init();
     gatt_init();

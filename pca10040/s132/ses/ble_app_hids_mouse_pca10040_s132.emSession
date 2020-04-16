@@ -71,7 +71,7 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="6" y="2305" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../main.c" selected="1" top="2278" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="2327" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../main.c" selected="1" top="2307" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="58" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/sensorsim/sensorsim.c" selected="0" top="34" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="242" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/ble/ble_services/ble_bas/ble_bas.c" selected="0" top="242" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="100" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/sensorsim/sensorsim.h" selected="0" top="68" codecName="Default"/>
@@ -92,5 +92,5 @@
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="430" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../modules/nrfx/hal/nrf_uarte.h" selected="0" top="410" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="318" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../modules/nrfx/drivers/src/nrfx_uarte.c" selected="0" top="298" codecName="Default"/>
  </Files>
- <ARMCrossStudioWindow activeProject="ble_app_hids_mouse_pca10040_s132" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="C:/Nordic/SDK/nRF5_SDK_15.2.0_9412b96/components/ble/ble_radio_notification" debugSearchPath="" autoConnectCapabilities="3199"/>
+ <ARMCrossStudioWindow activeProject="ble_app_hids_mouse_pca10040_s132" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="C:/Nordic/SDK/nRF5_SDK_15.2.0_9412b96/components/ble/ble_radio_notification" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>
