@@ -271,8 +271,9 @@ static const nrf_drv_twi_t m_twi = NRF_DRV_TWI_INSTANCE(TWI_INSTANCE_ID);
 /* Buffer for CAP1208 driver. */
 uint8_t reg[2] = {0xFD, 0x00};
 static uint8_t cmd_read;
-static double data_read[8];
+static double capa[] = {0,0,0,0,0,0,0,0};
 static uint8_t sampling_line;
+static double force[] = {0,0,0,0,0,0};
 
 /* SAADC */
 #define ADC_REF_VOLTAGE_IN_MILLIVOLTS   600                                     /**< Reference voltage (in milli volts) used by ADC while doing conversion. */
@@ -1578,7 +1579,7 @@ __STATIC_INLINE void data_handler(uint8_t data)
     if(data_norm > 100){  //Si > 100, reset à 0
         data_norm = 100;
     }
-    data_read[sampling_line] = data_norm;
+    capa[sampling_line] = data_norm;
 }
 
 void spi_event_handler(nrf_drv_spi_evt_t const * p_event,
@@ -2209,113 +2210,59 @@ void check_state_machine()
   touch_state[PREVIOUS].line = touch_state[ACTUAL].line;
 }
 
-void check_for_force(uint8_t channel)
+void check_capa()
 {
+  for(uint8_t i=0; i<8; i++)
+  {
+     //sampling_line = i;
+     // Read data of capacitive driver, blocking until read
+     read_sensorCAP_data(i);
+     NRF_LOG_INFO("CAPA READ[%d] = %d", i, capa[i]);
+  }
+}
 
-    channel++;
-    uint8_t resistive_pixel;
-
-    if( (channel == 1) || (channel == 2) )
-    {
-      resistive_pixel = 3;
-      mux_switch(resistive_pixel);
-      //NRF_LOG_INFO("switch 3");
-    }else if( (channel == 2) || (channel == 3) )
-    {
-      resistive_pixel = 2;
-      mux_switch(resistive_pixel);
-      //NRF_LOG_INFO("switch 2");
-    }else if( (channel == 3) || (channel == 4) )
-    {
-      resistive_pixel = 1;
-      mux_switch(resistive_pixel);
-      //NRF_LOG_INFO("switch 1");
-    }else if( (channel == 5) || (channel == 6) )
-    {
-      resistive_pixel = 6;
-      mux_switch(resistive_pixel);
-      //NRF_LOG_INFO("switch 2");
-    }else if( (channel == 6) || (channel == 7) )
-    {
-      resistive_pixel = 5;
-      mux_switch(resistive_pixel);
-      //NRF_LOG_INFO("switch 1");
-    }else if( (channel == 7) || (channel == 8) )
-    {
-      resistive_pixel = 4;
-      mux_switch(resistive_pixel);
-      //NRF_LOG_INFO("switch 2");
-    }
-
+void check_force()
+{
+  for(uint8_t i=0; i<6; i++)
+  {
+      mux_switch(i+1);
       // Sampling, block until get data
       saadc_sample();
       while(!m_sampling_done);
       m_sampling_done = false;
-    
-    // Decrement wiper data to be in the bridge middle point
-    if(adc_result_in_milli_volts < 1250)
-    {
-//        NRF_LOG_INFO("CLICK %d ", resistive_pixel);
-//        NRF_LOG_FLUSH();
-          
-          swipe_type = CLICK;
-
-          if(!lock_click)
-          {
-            NRF_LOG_INFO("CLICK %d ", resistive_pixel);
-            timer_swipe_start();
-            lock_click = true;
-          }
-
-    }
-
+      force[i] = adc_result_in_milli_volts;
+      NRF_LOG_INFO("FORCE READ[%d] = %d", i, force[i]);
+  }
+     
+   
 }
 
 void activity()
 {   
-  for(uint8_t i=0; i<8; i++)
-  {
-     sampling_line = i;
-     // Read data of capacitive driver, blocking until read
-     read_sensorCAP_data(sampling_line);
-     if( (data_read[sampling_line] > 50) )
-     {
-        check_for_force(sampling_line);
-//        NRF_LOG_INFO("data_read[sampling_line] =  %d", data_read[sampling_line]);
-
-        //Touch detection
-        touch_happened = true;
-//        touch_state[ACTUAL].x = m_x[sampling_line];
-//        touch_state[ACTUAL].y = m_y[sampling_line];
-        touch_state[ACTUAL].line = sampling_line;
-
-//        NRF_LOG_INFO("touch_state[ACTUAL].finger_state = %d", touch_state[ACTUAL].finger_state);
-//        NRF_LOG_INFO("touch_state[ACTUAL].line = %d", touch_state[ACTUAL].line);
-//        NRF_LOG_INFO("touch_state[ACTUAL].sampling_number = %d", touch_state[ACTUAL].sampling_number);
-     }
-  }
+  check_capa();
+  check_force();
 
   //update actual state
-  if(touch_happened)
-  {
-    touch_state[ACTUAL].finger_state = TOUCH;
-    touch_happened = false;
+//  if(touch_happened)
+//  {
+//    touch_state[ACTUAL].finger_state = TOUCH;
+//    touch_happened = false;
+//
+////    NRF_LOG_INFO("touch_state[ACTUAL].finger_state = %d", touch_state[ACTUAL].finger_state);
+////    NRF_LOG_INFO("touch_state[ACTUAL].line = %d", touch_state[ACTUAL].line);
+////    NRF_LOG_INFO("touch_state[ACTUAL].sampling_number = %d", touch_state[ACTUAL].sampling_number);
+////    NRF_LOG_INFO("****************************************");
+//
+//  }else 
+//  {
+//    touch_state[ACTUAL].finger_state = RELEASE;
+//  }
 
-//    NRF_LOG_INFO("touch_state[ACTUAL].finger_state = %d", touch_state[ACTUAL].finger_state);
-//    NRF_LOG_INFO("touch_state[ACTUAL].line = %d", touch_state[ACTUAL].line);
-//    NRF_LOG_INFO("touch_state[ACTUAL].sampling_number = %d", touch_state[ACTUAL].sampling_number);
-//    NRF_LOG_INFO("****************************************");
-
-  }else 
-  {
-    touch_state[ACTUAL].finger_state = RELEASE;
-  }
-
-  touch_state[ACTUAL].sampling_number++;
+ // touch_state[ACTUAL].sampling_number++;
   //NRF_LOG_INFO("touch_state[ACTUAL].sampling_number = %d", touch_state[ACTUAL].sampling_number);
   
   //Check HERE
-  check_state_machine();
+ // check_state_machine();
   
   
 }
