@@ -204,6 +204,7 @@ enum GESTURE_TYPE{
   GO_DOWN,
   GO_LEFT,
   GO_RIGHT,
+  GO_CLICK,
   GO_RELEASE,
 };
 
@@ -294,8 +295,8 @@ static uint16_t force_threshold = 400;
 static uint8_t capa_threshold = 25;
 static bool flag_first_time[] = {true, true, true, true, true, true};
 static bool flag_touch[] = {false, false, false, false, false, false};
-static bool gesture_detected = false;
-static bool lock_release = true;
+static bool gesture_wait = false;
+static bool release_wait = false;
 
 /* SAADC */
 #define ADC_REF_VOLTAGE_IN_MILLIVOLTS   600                                     /**< Reference voltage (in milli volts) used by ADC while doing conversion. */
@@ -625,7 +626,7 @@ static void sampling_timeout_handler(void * p_context)
 
 static void gesture_timeout_handler(void * p_context)
 {
-    gesture_detected = false;
+    gesture_wait = false;
 }
 
 void digitizer_send(uint8_t id, uint8_t c_count, uint16_t x, uint16_t y, bool tip_down)
@@ -666,14 +667,13 @@ static void swipe_timeout_handler(void * p_context)
             y = 15000;
             x = (30000) - cpt*2500;
             cpt++;
-            //digitizer_send(0, 1, x, y, true);
+            digitizer_send(0, 1, x, y, true);
             //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, true);
             if(cpt == 5) {
-                //digitizer_send(0, 1, x, y, false);
+                digitizer_send(0, 1, x, y, false);
                 //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d",x, y, false);
                 timer_swipe_stop();
                 cpt = 0;
-                //gesture_detected = false;
             }
             break;
 
@@ -681,14 +681,13 @@ static void swipe_timeout_handler(void * p_context)
             y = 15000;
             x = cpt*2500;
             cpt++;
-            //digitizer_send(0, 1, x, y, true);
+            digitizer_send(0, 1, x, y, true);
             //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, true);
             if(cpt == 5) {
-                //digitizer_send(0, 1, x, y, false);
+                digitizer_send(0, 1, x, y, false);
                 //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, false);
                 timer_swipe_stop();
                 cpt = 0;
-                //gesture_detected = false;
             }
             break;
 
@@ -696,14 +695,13 @@ static void swipe_timeout_handler(void * p_context)
             y = (20000) - cpt*2500;
             x = 0;
             cpt++;
-            //digitizer_send(0, 1, x, y, true);
+            digitizer_send(0, 1, x, y, true);
             //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, true);
             if(cpt == 5) {
-                //digitizer_send(0, 1, x, y, false);
+                digitizer_send(0, 1, x, y, false);
                 //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, false);
                 timer_swipe_stop();
                 cpt = 0;
-                //gesture_detected = false;
             }
             break;
 
@@ -711,14 +709,13 @@ static void swipe_timeout_handler(void * p_context)
             y = (20000) + cpt*2500;
             x = 0;
             cpt++;
-            //digitizer_send(0, 1, x, y, true);
+            digitizer_send(0, 1, x, y, true);
             //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, true);
             if(cpt == 5) {
-                //digitizer_send(0, 1, x, y, false);
+                digitizer_send(0, 1, x, y, false);
                 //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, false);
                 timer_swipe_stop();
                 cpt = 0;
-                //gesture_detected = false;
             }
             break;
 
@@ -726,14 +723,13 @@ static void swipe_timeout_handler(void * p_context)
             y = 31000;
             x = 15500;
             cpt++;
-            //digitizer_send(0, 1, x, y, true);
+            digitizer_send(0, 1, x, y, true);
             //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d", x, y, true);
             if(cpt == 5) {
-                //digitizer_send(0, 1, x, y, false);
+                digitizer_send(0, 1, x, y, false);
                 //NRF_LOG_INFO("Send... x = %d, y = %d, tip = %d",x, y, false);
                 timer_swipe_stop();
                 cpt = 0;
-                //gesture_detected = false;
             }
             break;
 
@@ -2091,37 +2087,42 @@ void check_force()
 
 }
 
-void gesture_detection()
+void check_state_machine()
 {
-  //Release detect on capa 0
-  if( (buffer_capa[0][9] < capa_threshold) && (buffer_capa[0][8] > capa_threshold) ){
-      NRF_LOG_INFO("GO_RELEASE 0");
-      lock_release = false;
-  }else if ( (buffer_capa[1][9] < capa_threshold) && (buffer_capa[1][8] > capa_threshold) ){
-      NRF_LOG_INFO("GO_RELEASE 1");
-      lock_release = false;
-  }else if ( (buffer_capa[2][9] < capa_threshold) && (buffer_capa[2][8] > capa_threshold) ){
-      NRF_LOG_INFO("GO_RELEASE 2");
-      lock_release = false;
-  }else if ( (buffer_capa[3][9] < capa_threshold) && (buffer_capa[3][8] > capa_threshold) ){
-      NRF_LOG_INFO("GO_RELEASE 3");
-      lock_release = false;
-  }else if ( (buffer_capa[4][9] < capa_threshold) && (buffer_capa[4][8] > capa_threshold) ){
-      NRF_LOG_INFO("GO_RELEASE 4");
-      lock_release = false;
-  }else if ( (buffer_capa[5][9] < capa_threshold) && (buffer_capa[5][8] > capa_threshold) ){   
-      NRF_LOG_INFO("GO_RELEASE 5");
-      lock_release = false;
-  }else if ( (buffer_capa[6][9] < capa_threshold) && (buffer_capa[6][8] > capa_threshold) ){   
-      NRF_LOG_INFO("GO_RELEASE 6");
-      lock_release = false;
-  }else if ( (buffer_capa[7][9] < capa_threshold) && (buffer_capa[7][8] > capa_threshold) ){  
-      NRF_LOG_INFO("GO_RELEASE 7");
-      lock_release = false;
-  }
-
-  if(!gesture_detected && !lock_release)
+  //Click detect
+  if( (!gesture_wait) && (!release_wait) )
   {
+    for(uint8_t i = 0; i<6; i++)
+    {
+      if(force_delta[i] > force_threshold)
+      {
+        NRF_LOG_INFO("CLICK @ %d", i);
+        swipe_type = FORCE;
+        release_wait = true;
+        gesture_wait = true;
+        timer_gesture_start();     
+        timer_swipe_start();
+      }
+    }
+  }
+  
+  // RELEASE detect
+  if( (touch_state[ACTUAL].finger_state == RELEASE) && (touch_state[PREVIOUS].finger_state == TOUCH) )
+  {
+    //NRF_LOG_INFO("REALEASE -> LINE %d",touch_state[ACTUAL].line);
+    release_wait = false;
+  }  
+
+  //Pixel change detect
+  if( (touch_state[ACTUAL].finger_state == TOUCH) 
+    && (touch_state[PREVIOUS].finger_state == TOUCH)
+    && (touch_state[ACTUAL].line != touch_state[PREVIOUS].line) 
+    && (!release_wait)
+    && (!gesture_wait) )
+    
+  {
+    //NRF_LOG_INFO("CHANGE PIXEL TOUCH -> LINE %d", touch_state[ACTUAL].line);
+
     //Capa 0
     if(buffer_capa[0][9] > capa_threshold)
     {
@@ -2129,23 +2130,13 @@ void gesture_detection()
       {
         if(buffer_capa[1][i] > capa_threshold)
         {
-          gesture_detected = true;
-          lock_release = true;
           gesture = GO_DOWN;
-          timer_gesture_start();
-          NRF_LOG_INFO("GO_DOWN");
           break;
-        }else if (buffer_capa[7][i] > capa_threshold){
-          gesture_detected = true;
-          lock_release = true;
-          gesture = GO_LEFT;
-          timer_gesture_start();
-          NRF_LOG_INFO("GO_LEFT");
-          break;
+        }else{
+          gesture = GO_NOWHERE;
         }
       }
     }
-
     //Capa 1
     if(buffer_capa[1][9] > capa_threshold)
     {
@@ -2153,72 +2144,180 @@ void gesture_detection()
       {
         if(buffer_capa[0][i] > capa_threshold)
         {
-          gesture_detected = true;
-          lock_release = true;
           gesture = GO_UP;
-          timer_gesture_start();
-          NRF_LOG_INFO("GO_UP");
           break;
         }else if (buffer_capa[2][i] > capa_threshold){
-          gesture_detected = true;
-          lock_release = true;
           gesture = GO_DOWN;
-          timer_gesture_start();
-          NRF_LOG_INFO("GO_DOWN");
+          break;
+        }else{
+          gesture = GO_NOWHERE;
+        }
+      }
+    }
+    //Capa 2
+    if(buffer_capa[2][9] > capa_threshold)
+    {
+      for(uint8_t i = 5; i>0; i--)
+      {
+        if(buffer_capa[1][i] > capa_threshold)
+        {
+          gesture = GO_UP;
+          break;
+        }else if (buffer_capa[3][i] > capa_threshold){
+          gesture = GO_DOWN;
+          break;
+        }else{
+          gesture = GO_NOWHERE;
+        }
+      }
+    }
+    //Capa 3
+    if(buffer_capa[3][9] > capa_threshold)
+    {
+      for(uint8_t i = 5; i>0; i--)
+      {
+        if(buffer_capa[2][i] > capa_threshold)
+        {
+          gesture = GO_UP;
+          break;
+        }else{
+          gesture = GO_NOWHERE;
+        }
+      }
+    }
+    //Capa 4
+    if(buffer_capa[4][9] > capa_threshold)
+    {
+      for(uint8_t i = 5; i>0; i--)
+      {
+        if (buffer_capa[5][i] > capa_threshold){
+          gesture = GO_UP;
+          break;
+        }else{
+          gesture = GO_NOWHERE;
+        }
+      }
+    }
+    //Capa 5
+    if(buffer_capa[5][9] > capa_threshold)
+    {
+      for(uint8_t i = 5; i>0; i--)
+      {
+        if(buffer_capa[4][i] > capa_threshold)
+        {
+          gesture = GO_DOWN;
           break;
         }else if (buffer_capa[6][i] > capa_threshold){
-          gesture_detected = true;
-          lock_release = true;
-          gesture = GO_LEFT;
-          timer_gesture_start();
-          NRF_LOG_INFO("GO_LEFT");
+          gesture = GO_UP;
           break;
+        }else{
+          gesture = GO_NOWHERE;
+        }
+      }
+    }
+    //Capa 6
+    if(buffer_capa[6][9] > capa_threshold)
+    {
+      for(uint8_t i = 5; i>0; i--)
+      {
+        if(buffer_capa[5][i] > capa_threshold)
+        {
+          gesture = GO_DOWN;
+          break;
+        }else if (buffer_capa[7][i] > capa_threshold){
+          gesture = GO_UP;
+          break;
+        }else{
+          gesture = GO_NOWHERE;
+        }
+      }
+    }
+    //Capa 7
+    if(buffer_capa[7][9] > capa_threshold)
+    {
+      for(uint8_t i = 5; i>0; i--)
+      {
+        if (buffer_capa[6][i] > capa_threshold){
+          gesture = GO_DOWN;
+          break;
+        }else{
+          gesture = GO_NOWHERE;
         }
       }
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  }
-
-//    switch(gesture)
-//    {
-//       case GO_UP:
-//          NRF_LOG_INFO("GO_UP");
-////          swipe_type = UP;
-////          timer_swipe_start();
-//        break;
-//       case GO_DOWN:
-//          NRF_LOG_INFO("GO_DOWN");
-////          gesture_detected = true;
-////          timer_gesture_start();
-////          swipe_type = DOWN;
-////          timer_swipe_start();
-//        break;
+    switch(gesture)
+    {
+       case GO_UP:
+          NRF_LOG_INFO("GO_UP");
+          swipe_type = UP;
+          release_wait = true;
+          gesture_wait = true;
+          timer_gesture_start();
+          timer_swipe_start();
+        break;
+       case GO_DOWN:
+          NRF_LOG_INFO("GO_DOWN");
+          swipe_type = DOWN;
+          release_wait = true;
+          gesture_wait = true;
+          timer_gesture_start();
+          timer_swipe_start();
+        break;
 //       case GO_LEFT:
 //          NRF_LOG_INFO("GO_LEFT");
-////          gesture_detected = true;
-////          timer_gesture_start();
+//          release_wait = true;
+//          gesture_wait = true;
+//          timer_gesture_start();
 ////          swipe_type = LEFT;
 ////          timer_swipe_start();
 //        break;
-//       default:
-//        break;
-//    }
+//       case GO_RIGHT:
+//          NRF_LOG_INFO("GO_RIGHT");
+//          release_wait = true;
+//          gesture_wait = true;
+//          timer_gesture_start();
+////          swipe_type = RIGHT;
+////          timer_swipe_start();
+        break;
+       default:
+        break;
+    }
+  }
+ 
+}
+
+void gesture_detection()
+{
+
+  //Put capacitive pixel as a machine state
+  for (uint8_t i = 0; i<8; i++)
+  {
+    if((buffer_capa[i][9] > capa_threshold))
+    {
+      touch_happened = true;
+      touch_state[ACTUAL].line = i;
+    }
+  }
+
+  if(touch_happened)
+  {
+    touch_state[ACTUAL].finger_state = TOUCH;
+    touch_happened = false;
+  }else{
+    touch_state[ACTUAL].finger_state = RELEASE;
+  }
+
+//  NRF_LOG_INFO("touch_state[ACTUAL].finger_state = %d", touch_state[ACTUAL].finger_state);
+//  NRF_LOG_INFO("touch_state[ACTUAL].line = %d", touch_state[ACTUAL].line);
+//  NRF_LOG_INFO("touch_state[PREVIOUS].finger_state = %d", touch_state[PREVIOUS].finger_state);
+//  NRF_LOG_INFO("touch_state[PREVIOUS].line = %d", touch_state[PREVIOUS].line);
+
+  check_state_machine();
+
+  //Update state
+  touch_state[PREVIOUS].finger_state = touch_state[ACTUAL].finger_state;
+  touch_state[PREVIOUS].line = touch_state[ACTUAL].line;
 }
 
 void activity()
