@@ -292,7 +292,7 @@ static double force[] = {0,0,0,0,0,0};
 static double force_init [] = {0,0,0,0,0,0};
 static double force_delta [] = {0,0,0,0,0,0};
 static uint16_t force_threshold = 400;
-static uint8_t capa_threshold = 25;
+static uint8_t capa_threshold = 15;
 static bool flag_first_time[] = {true, true, true, true, true, true};
 static bool flag_touch[] = {false, false, false, false, false, false};
 static bool gesture_wait = false;
@@ -1749,9 +1749,9 @@ static void CAP1208_init(void)
 
     NRF_LOG_INFO("CHIP ID = %X", cmd_read);
 
-    //Write SENSOR INPUT ENABLE (Register 0x21)
-    reg[0] = 0x21;
-    reg[1] = 0xFF;
+    //Write AVERAGING AND SAMPLING CONFIGURATION REGISTER (Register 0x24)
+    reg[0] = 0x24;
+    reg[1] = 0x05;
     err_code = nrf_drv_twi_tx(&m_twi, CAP1208_ADDR, reg, 2, false);
     APP_ERROR_CHECK(err_code);
     while (!m_xfer_done);
@@ -1956,7 +1956,8 @@ void check_capa()
      sampling_line = i;
      // Read data of capacitive driver, blocking until read
      read_sensorCAP_data(i);
-  }
+     //NRF_LOG_INFO("CAPA [%d] = %d", capa[i]);
+  } 
   bufferize();
 }
 
