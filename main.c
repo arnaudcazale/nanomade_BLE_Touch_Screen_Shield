@@ -1878,9 +1878,9 @@ static void calibration()
     m_sampling_done = false;
 
     // Decrement wiper data to be in the bridge middle point
-    if(adc_result_in_milli_volts > 1655)
+    if(adc_result_in_milli_volts < 1655)
     {
-      while ( (adc_result_in_milli_volts > 1655) && (wiper_data[channel] > 0) )
+      while ( (adc_result_in_milli_volts < 1655) && (wiper_data[channel] > 0) )
       {
         wiper_data[channel]--;
 
@@ -1891,6 +1891,8 @@ static void calibration()
         saadc_sample();
         while(!m_sampling_done);
         m_sampling_done = false;
+
+        nrf_delay_us(50);
       }
     }
 
