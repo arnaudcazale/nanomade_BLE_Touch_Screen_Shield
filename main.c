@@ -1764,7 +1764,7 @@ static void MAX_9939_init()
 {
 
     uint8_t command[1]; 
-    command[0] = 0xa0; //Gain a 30
+    command[0] = 0x90; //Gain a 40
     
     nrf_gpio_pin_clear(SPI_SS_PIN_AMP);
     APP_ERROR_CHECK(nrf_drv_spi_transfer(&spi, command, sizeof(command), NULL, NULL));
@@ -2085,7 +2085,7 @@ void check_force()
           }
         break;
       }
-      //NRF_LOG_INFO("FORCE DELTA READ[%d] = %d", i, force_delta[i]);
+      NRF_LOG_INFO("FORCE DELTA READ[%d] = %d", i, force_delta[i]);
   }
 
 }
@@ -2341,6 +2341,8 @@ int main(void)
     timers_init();
     buttons_leds_init(&erase_bonds);
     power_management_init();
+    // internal RC setup for sofdevice, problems: stuck in ble_stack_init() sometimes if
+    // setup to external XTAL softrdevice clock source. Original setup are XTAL, 0, 0, 20PPM
     ble_stack_init();
     radio_notification_init();
     scheduler_init();
