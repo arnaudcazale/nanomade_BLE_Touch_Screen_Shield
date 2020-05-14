@@ -291,8 +291,8 @@ static uint8_t sampling_line;
 static double force[] = {0,0,0,0,0,0};
 static double force_init [] = {0,0,0,0,0,0};
 static double force_delta [] = {0,0,0,0,0,0};
-static uint16_t force_threshold = 400;
-static uint8_t capa_threshold = 15;
+static uint16_t force_threshold = 200;
+static uint8_t capa_threshold = 25;
 static bool flag_first_time[] = {true, true, true, true, true, true};
 static bool flag_touch[] = {false, false, false, false, false, false};
 static bool gesture_wait = false;
@@ -314,6 +314,7 @@ static volatile uint16_t adc_result_in_milli_volts;
 #define A 2
 #define B 25
 #define C 24
+#define test_pin 5
 
 static bool              m_in_boot_mode = false;                                    /**< Current protocol mode. */
 static uint16_t          m_conn_handle  = BLE_CONN_HANDLE_INVALID;                  /**< Handle of the current connection. */
@@ -1750,12 +1751,12 @@ static void CAP1208_init(void)
     NRF_LOG_INFO("CHIP ID = %X", cmd_read);
 
     //Write AVERAGING AND SAMPLING CONFIGURATION REGISTER (Register 0x24)
-    reg[0] = 0x24;
-    reg[1] = 0x05;
-    err_code = nrf_drv_twi_tx(&m_twi, CAP1208_ADDR, reg, 2, false);
-    APP_ERROR_CHECK(err_code);
-    while (!m_xfer_done);
-    m_xfer_done = false;
+//    reg[0] = 0x24;
+//    reg[1] = 0x05;
+//    err_code = nrf_drv_twi_tx(&m_twi, CAP1208_ADDR, reg, 2, false);
+//    APP_ERROR_CHECK(err_code);
+//    while (!m_xfer_done);
+//    m_xfer_done = false;
 
     NRF_LOG_INFO("Stop CAP1208_init.");
 }
@@ -1788,12 +1789,14 @@ static void gpio_init()
     nrf_gpio_cfg_output(C);
     nrf_gpio_cfg_output(SPI_SS_PIN_POT);
     nrf_gpio_cfg_output(SPI_SS_PIN_AMP);
+    nrf_gpio_cfg_output(test_pin);
 
     nrf_gpio_pin_clear(A);
     nrf_gpio_pin_clear(B);
     nrf_gpio_pin_clear(C);
     nrf_gpio_pin_set(SPI_SS_PIN_POT);
     nrf_gpio_pin_set(SPI_SS_PIN_AMP);
+    nrf_gpio_pin_clear(test_pin);
 }
 
 static void mux_switch(uint8_t channel)
@@ -1958,7 +1961,7 @@ void check_capa()
      sampling_line = i;
      // Read data of capacitive driver, blocking until read
      read_sensorCAP_data(i);
-     //NRF_LOG_INFO("CAPA [%d] = %d", capa[i]);
+     //NRF_LOG_INFO("CAPA [%d] = %d", sampling_line, capa[i]);
   } 
   bufferize();
 }
@@ -1968,10 +1971,14 @@ void check_force()
   for(uint8_t i=0; i<6; i++)
   {
       mux_switch(i+1);
+      nrf_delay_us(30);
+      //nrf_gpio_pin_set(test_pin);
       // Sampling, block until get data
       saadc_sample();
       while(!m_sampling_done);
       m_sampling_done = false;
+      //nrf_gpio_pin_clear(test_pin);
+     
       force[i] = adc_result_in_milli_volts;
       //NRF_LOG_INFO("FORCE READ[%d] = %d", i, force[i]);
 
@@ -1986,8 +1993,7 @@ void check_force()
                 flag_first_time[i] = false;
                 force_init[i] = force[i];
             }
-
-            force_delta[i] = force_init[i] - force[i];
+            force_delta[i] = force[i] - force_init[i];
           }else{
             //flag_touch[i] = false;
             flag_first_time[i] = true;
@@ -2004,8 +2010,7 @@ void check_force()
                 flag_first_time[i] = false;
                 force_init[i] = force[i];
             }
-
-            force_delta[i] = force_init[i] - force[i];
+            force_delta[i] = force[i] - force_init[i];
           }else{
             //flag_touch[i] = false;
             flag_first_time[i] = true;
@@ -2022,8 +2027,7 @@ void check_force()
                 flag_first_time[i] = false;
                 force_init[i] = force[i];
             }
-
-            force_delta[i] = force_init[i] - force[i];
+            force_delta[i] = force[i] - force_init[i];
           }else{
             //flag_touch[i] = false;
             flag_first_time[i] = true;
@@ -2040,8 +2044,7 @@ void check_force()
                 flag_first_time[i] = false;
                 force_init[i] = force[i];
             }
-
-            force_delta[i] = force_init[i] - force[i];
+            force_delta[i] = force[i] - force_init[i];
           }else{
             //flag_touch[i] = false;
             flag_first_time[i] = true;
@@ -2058,8 +2061,7 @@ void check_force()
                 flag_first_time[i] = false;
                 force_init[i] = force[i];
             }
-
-            force_delta[i] = force_init[i] - force[i];
+            force_delta[i] = force[i] - force_init[i];
           }else{
             //flag_touch[i] = false;
             flag_first_time[i] = true;
@@ -2076,8 +2078,7 @@ void check_force()
                 flag_first_time[i] = false;
                 force_init[i] = force[i];
             }
-
-            force_delta[i] = force_init[i] - force[i];
+            force_delta[i] = force[i] - force_init[i];
           }else{
             //flag_touch[i] = false;
             flag_first_time[i] = true;
@@ -2085,7 +2086,7 @@ void check_force()
           }
         break;
       }
-      NRF_LOG_INFO("FORCE DELTA READ[%d] = %d", i, force_delta[i]);
+      //NRF_LOG_INFO("FORCE DELTA READ[%d] = %d", i, force_delta[i]);
   }
 
 }
@@ -2335,7 +2336,7 @@ void activity()
 int main(void)
 {
     bool erase_bonds;
-
+  
     // Initialize.
     log_init();
     timers_init();
@@ -2344,7 +2345,7 @@ int main(void)
     // internal RC setup for sofdevice, problems: stuck in ble_stack_init() sometimes if
     // setup to external XTAL softrdevice clock source. Original setup are XTAL, 0, 0, 20PPM
     ble_stack_init();
-    radio_notification_init();
+    //radio_notification_init();
     scheduler_init();
     gap_params_init();
     gatt_init();
@@ -2370,6 +2371,7 @@ int main(void)
 
     //timer_battery_start();
     timer_sampling_start();
+    //erase_bonds = true;
     advertising_start(erase_bonds);
 
     // Enter main loop.

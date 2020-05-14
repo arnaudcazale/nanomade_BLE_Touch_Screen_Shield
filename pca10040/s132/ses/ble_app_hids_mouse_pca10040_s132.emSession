@@ -73,9 +73,9 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="18" y="2340" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../main.c" selected="1" top="2315" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="27" y="2371" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../main.c" selected="1" top="2351" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="6911" useTextEdit="1" useBinaryEdit="0" left="0" path="../config/sdk_config.h" selected="0" top="6892" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="99" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/util/app_error_weak.c" selected="0" top="67" codecName=""/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="99" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/util/app_error_weak.c" selected="0" top="67" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="82" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/ble/peer_manager/peer_manager_types.h" selected="0" top="62" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="959" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/ble/peer_manager/peer_manager.c" selected="0" top="939" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="592" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/ble/peer_manager/peer_manager_handler.c" selected="0" top="572" codecName="Default"/>
