@@ -464,6 +464,8 @@ static void pm_evt_handler(pm_evt_t const * p_evt)
     pm_handler_on_pm_evt(p_evt);
     pm_handler_flash_clean(p_evt);
 
+    //NRF_LOG_INFO("PM_EVT! = %d", p_evt->evt_id);
+
     switch (p_evt->evt_id)
     {
         case PM_EVT_PEERS_DELETE_SUCCEEDED:
@@ -480,6 +482,13 @@ static void pm_evt_handler(pm_evt_t const * p_evt)
                 whitelist_set(PM_PEER_ID_LIST_SKIP_NO_ID_ADDR);
             }
             break;
+
+        case PM_EVT_CONN_SEC_CONFIG_REQ: 
+            NRF_LOG_INFO("ALLOW REPAIRING");
+            {
+                pm_conn_sec_config_t config = {.allow_repairing = true};
+                pm_conn_sec_config_reply(p_evt->conn_handle, &config);
+            }
 
         default:
             break;
@@ -2368,6 +2377,9 @@ int main(void)
     // Start execution.
     NRF_LOG_INFO("HID Mouse example started.");
     NRF_LOG_FLUSH();
+
+    //Set power to +4dBm
+    //sd_ble_gap_tx_power_set(BLE_GAP_TX_POWER_ROLE_ADV, m_advertising.adv_handle , 4);
 
     //timer_battery_start();
     timer_sampling_start();

@@ -54,13 +54,13 @@
  </TraceWindow>
  <Watch1>
   <Watches active="1" update="Never">
-   <Watchpoint expression="adc_result_in_milli_volts" name="adc_result_in_milli_volts" radix="11" linenumber="1943" filename="../../../main.c"/>
-   <Watchpoint numelements="0" expression="dig_rep" evalMode="0" name="dig_rep" radix="16" linenumber="1468" filename="../../../main.c" list=""/>
+   <Watchpoint expression="adc_result_in_milli_volts" name="adc_result_in_milli_volts" radix="11" linenumber="1955" filename="../../../main.c"/>
+   <Watchpoint numelements="0" expression="dig_rep" evalMode="0" name="dig_rep" radix="16" linenumber="1478" filename="../../../main.c" list=""/>
    <Watchpoint numelements="0" expression="hvx_params" evalMode="0" name="hvx_params" radix="-1" linenumber="1374" filename="../../../../../../components/ble/ble_services/ble_hids/ble_hids.c" list=""/>
-   <Watchpoint expression="wiper1_data" name="wiper1_data" radix="16" linenumber="1948" filename="../../../main.c"/>
-   <Watchpoint expression="i" name="i" radix="2" linenumber="1927" filename="../../../main.c"/>
-   <Watchpoint expression="wiper_data[channel]" name="wiper_data[channel]" radix="-1" linenumber="1852" filename="../../../main.c"/>
-   <Watchpoint expression="channel" name="channel" radix="-1" linenumber="1835" filename="../../../main.c"/>
+   <Watchpoint expression="wiper1_data" name="wiper1_data" radix="16" linenumber="1960" filename="../../../main.c"/>
+   <Watchpoint expression="i" name="i" radix="2" linenumber="1939" filename="../../../main.c"/>
+   <Watchpoint expression="wiper_data[channel]" name="wiper_data[channel]" radix="11" linenumber="1864" filename="../../../main.c"/>
+   <Watchpoint expression="channel" name="channel" radix="-1" linenumber="1847" filename="../../../main.c"/>
   </Watches>
  </Watch1>
  <Watch2>
@@ -73,15 +73,12 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="27" y="2371" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../main.c" selected="1" top="2351" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="6911" useTextEdit="1" useBinaryEdit="0" left="0" path="../config/sdk_config.h" selected="0" top="6892" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="99" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/util/app_error_weak.c" selected="0" top="67" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="82" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/ble/peer_manager/peer_manager_types.h" selected="0" top="62" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="959" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/ble/peer_manager/peer_manager.c" selected="0" top="939" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="592" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/ble/peer_manager/peer_manager_handler.c" selected="0" top="572" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="89" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/ble/ble_advertising/ble_advertising.c" selected="0" top="64" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="464" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/bsp/bsp.c" selected="0" top="444" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="200" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../modules/nrfx/mdk/system_nrf52.c" selected="0" top="160" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="5" y="2102" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../main.c" selected="1" top="497" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="316" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../modules/nrfx/drivers/src/nrfx_uarte.c" selected="0" top="553" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="99" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/util/app_error_weak.c" selected="0" top="79" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="430" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../modules/nrfx/hal/nrf_uarte.h" selected="0" top="410" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="277" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/ble/common/ble_conn_state.c" selected="0" top="257" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="321" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/ble/peer_manager/peer_manager_types.h" selected="0" top="304" codecName="Default"/>
  </Files>
  <ARMCrossStudioWindow activeProject="ble_app_hids_mouse_pca10040_s132" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="C:/Users/arnau/Desktop" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>
